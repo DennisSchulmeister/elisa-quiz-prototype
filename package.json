@@ -1,0 +1,28 @@
+{
+  "name": "@dschulmeis/elisa-quiz-prototyp",
+  "version": "1.0.0",
+  "description": "Prototype for AI generated learning quizzes",
+  "author": "Dennis Schulmeister-Zimolong",
+  "type": "module",
+  "scripts": {
+    "clean": "node bin/clean.js",
+    "build": "npm run clean && node bin/esbuild-bundle.js && npm run check",
+    "check": "tsc && svelte-check --tsconfig tsconfig.json --fail-on-warnings",
+    "start": "conc -r \"tsc -w\" \"node bin/esbuild-serve.js\""
+  },
+  "config": {
+    "clean_dirs": "static/_bundle"
+  },
+  "devDependencies": {
+    "@tsconfig/svelte": "^5.0.4",
+    "concurrently": "^9.2.0",
+    "esbuild": "^0.25.5",
+    "esbuild-svelte": "^0.9.3",
+    "shelljs": "^0.10.0",
+    "sv": "^0.8.12",
+    "svelte": "^5.34.7",
+    "svelte-check": "^4.2.2",
+    "svelte-spa-router": "^4.0.1",
+    "typescript": "^5.8.3"
+  }
+}

@@ -1,0 +1,49 @@
+{
+    "$schema": "https://json.schemastore.org/tsconfig",
+    "extends": "@tsconfig/svelte/tsconfig.json",
+    "display": "Typescript configuration",
+    "compilerOptions": {
+        // JavaScript version settings
+        "target": "esnext",
+        "lib": ["ESNext", "DOM"], // Backend projects: ["ESNext"]
+        "module": "esnext",       // Backend projects: "nodenext"
+        "moduleResolution": "Bundler",
+
+        // Output settings
+        "noEmit": true,
+        // "declaration": true,
+        // "sourceMap": true,
+        // "declarationMap": true,
+        // "outDir": "./build",
+        "rootDir": "./src/",
+
+        // Compilation options
+        "allowJs": true,
+        "skipLibCheck": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "strict": true,
+        "verbatimModuleSyntax": true,
+        "forceConsistentCasingInFileNames": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+
+        // // Where to find external type declarations
+        // "typeRoots": ["node_modules/@types", "node_modules/svelte/types"],
+
+        // Specify type package names to be included without being referenced in a source file
+        "types": [
+            "svelte"
+        ]
+    },
+
+    "include": [
+        "./src/"
+        // // Add TS-only packages like this:
+        // "./node_modules/OTHERLIB/**/package.json",
+        // "./node_modules/OTHERLIB/**/*.ts",
+        // "./node_modules/OTHERLIB/**/*.json",
+    ],
+
+    "exclude": []
+}

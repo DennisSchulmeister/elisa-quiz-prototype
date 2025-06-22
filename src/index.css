@@ -1,0 +1,44 @@
+/* Webfonts */
+@font-face {
+    /* Caprasimo Regular */
+    font-display: swap;
+    font-family: "display";
+    font-style: normal;
+    font-weight: 400;
+    src: url("fonts/Caprasimo/Caprasimo-Regular.woff") format("woff2");
+}
+
+@font-face {
+    /* Funnel Sans */
+    font-display: swap;
+    font-family: "normaltext";
+    font-style: normal;
+    font-weight: 400;
+    src: url("fonts/Funnel_Sans/FunnelSans-VariableFont_wght.woff2") format("woff2");
+}
+
+@font-face {
+    /* Funnel Sans */
+    font-display: swap;
+    font-family: "normaltext";
+    font-style: italic;
+    font-weight: 400;
+    src: url("fonts/Funnel_Sans/FunnelSans-Italic-VariableFont_wght.woff2") format("woff2");
+}
+
+/* Global settings */
+html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+}
+
+html {
+    font-family: "normaltext";
+    font-size: 12pt;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
