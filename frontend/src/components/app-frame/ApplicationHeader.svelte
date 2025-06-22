@@ -1,4 +1,14 @@
 <!--
+Elisa: AI Learning Quiz
+© 2025 Dennis Schulmeister-Zimolong <dennis@wpvs.de>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+-->
+
+<!--
 @component
 Application header that is permanently visible at the top of the screen. Shows the
 app title and some information about the quiz.
