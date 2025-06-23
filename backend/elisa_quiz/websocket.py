@@ -6,7 +6,7 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-import asyncio, json, typing
+import json, traceback, typing
 
 from fastapi import WebSocket
 from fastapi import WebSocketDisconnect
@@ -63,9 +63,11 @@ class ChatWebSocketHandler:
                     else:
                         await self.send_error(f"Unknown message code: {message["code"]}")
                 except Exception as e:
+                    traceback.print_exc()
+                    print(flush=True)
                     await self.send_error(str(e))
         except WebSocketDisconnect:
-            print("Client disconnected")
+            print("Client disconnected", flush=True)
 
     async def send_message(self, code: str, data: dict = {}):
         """
@@ -89,5 +91,6 @@ class ChatWebSocketHandler:
         """
         Feed chat input from user to the LLM and stream back the response.
         """
-        text = message.get("text", "")
-        await self.chat_agent.user_input(text, self.send_message)
+        text     = message.get("text", "")
+        language = message.get("language", "en")
+        await self.chat_agent.user_input(text, language, self.send_message)

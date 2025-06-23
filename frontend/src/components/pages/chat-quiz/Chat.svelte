@@ -14,9 +14,10 @@ Main container for the chat conversation.
 -->
 <script lang="ts">
     // https://fonts.google.com/icons?selected=Material+Symbols+Outlined:arrow_upward
-    import ArrowUp from "./google-material-arrow-up.svg";
-    import {i18n}  from "../../../stores/i18n.js";
-    import {chat}  from "../../../stores/chat.js";
+    import ArrowUp     from "./google-material-arrow-up.svg";
+    import ChatMessage from "./ChatMessage.svelte";
+    import {i18n}      from "../../../stores/i18n.js";
+    import {chat}      from "../../../stores/chat.js";
 
     let inputInnerDiv: HTMLDivElement;
     let readyToSend = $state(false);
@@ -29,7 +30,7 @@ Main container for the chat conversation.
         readyToSend = (inputInnerDiv.textContent !== null) && (inputInnerDiv.textContent.trim() !== "");
     }
 
-    function onInputInnerKeyPress(event: KeyboardEvent) {
+    function onInputKeyUp(event: KeyboardEvent) {
         updateInputState();
         
         if (event.key === "Enter") {
@@ -51,7 +52,9 @@ Main container for the chat conversation.
 <div id="container">
     <!-- Chat messages -->
     <div id="messages">
-        MESSAGES
+        {#each $chat as chatMessage}
+            <ChatMessage message={chatMessage}/>
+        {/each}
     </div>
 
     <!-- User input field -->
@@ -60,7 +63,7 @@ Main container for the chat conversation.
         role     = "dialog"
         tabindex = "0"
         onclick  = {focusInputInnerDiv}
-        onkeyup  = {focusInputInnerDiv}
+        onkeyup  = {onInputKeyUp}
         onblur   = {updateInputState}
     >
         <div class="input-field-placeholder">
@@ -69,7 +72,7 @@ Main container for the chat conversation.
                 contenteditable = "true"
                 role            = "textbox"
                 tabindex        = "0"
-                onkeypress      = {onInputInnerKeyPress}
+                onkeyup         = {onInputKeyUp}
                 bind:this       = {inputInnerDiv}
             ></div>
     
@@ -80,7 +83,11 @@ Main container for the chat conversation.
             {/if}
         </div>
 
-        <button title={$i18n.Chat.TooltipSend} class={readyToSend ? "active" : ""} onclick={sendMessage}>
+        <button
+            title        = {$i18n.Chat.TooltipSend}
+            class:active = {readyToSend}
+            onclick      = {sendMessage}
+        >
             <img src={ArrowUp} alt={$i18n.Chat.TooltipSend}>
         </button>
     </div>
@@ -94,9 +101,14 @@ Main container for the chat conversation.
         flex-direction: column;
         justify-content: space-between;
         align-items: stretch;
+        gap: 2em;
     }
 
     #messages {
+        display: flex;
+        flex-direction: column;
+        gap: 1em;
+
         overflow-y: auto;
     }
 

@@ -8,28 +8,35 @@
  * License, or (at your option) any later version.
  */
 
-import type { Writable } from "svelte/store";
-import { writable }      from "svelte/store";
-import { _, i18n}        from "./i18n.js";
-import QuizStore         from "./quiz.js";
+import type { Writable }     from "svelte/store";
+import { writable }          from "svelte/store";
+import { _, i18n, language } from "./i18n.js";
+import QuizStore             from "./quiz.js";
 
 /**
  * Websocket message exchanged between frontend and backend. This is deliberately
  * kept simple. It simply contains a message code with additional data.
  */
-type WebSocketMessage = {
-    code: string;
+interface WebSocketMessage {
+    code?: string;
     [key: string]: any;
 };
 
 /**
  A single chat message to be displayed in the UI.
  */
-export type ChatMessage = {
-    id: string;
-    role: "user" | "agent" | "error";
-    text: string;
+export interface ChatMessage extends WebSocketMessage {
+    id?:   string;
+    role?: "user" | "agent" | "error";
+    text?: string;
 };
+
+/**
+ * Error message received from the backend
+ */
+export interface ErrorMessage extends WebSocketMessage {
+    text?: string;
+}
 
 /**
  * A reactive WebSocket store that manages a connection to the backend server
@@ -60,7 +67,7 @@ class ChatStore {
             this.socket.addEventListener("error", this.handleError);
 
             // Send initial message to trigger greeting from LLM
-            this.send("chat_input", {text: "Hi!"});
+            this.socket.addEventListener("open", () => this.send("chat_input", {text: "Hi!", language: language.value}));
         } catch (error) {
             let errorMessage = error instanceof Error ? error.message : String(error);
             this.appendError(i18n.value.WebsocketError.FetchURL + " " + errorMessage);
@@ -74,14 +81,16 @@ class ChatStore {
      * @param text - Message text
      */
     sendChatMessage(text: string) {
-        const errorMessage: ChatMessage = {
-            id:   crypto.randomUUID(),
-            role: "user",
-            text: text,
+        const chatMessage: ChatMessage = {
+            code:     "chat_input",
+            id:       crypto.randomUUID(),
+            role:     "user",
+            text:     text,
+            language: language.value,
         };
 
-        this.store.update((messages) => [...messages, errorMessage]);
-        this.send("chat_input", {text});
+        this.store.update((messages) => [...messages, chatMessage]);
+        this.send("chat_input", {text: text, language: language.value});
     }
 
     /**
@@ -107,7 +116,6 @@ class ChatStore {
      */
     private handleMessage = (event: MessageEvent) => {
         try {
-            console.log(event);
             const message: WebSocketMessage = JSON.parse(event.data);
 
             const handler = `handle_${message.code}`;
@@ -132,17 +140,21 @@ class ChatStore {
      */
     private handle_chat_reply(inboundMessage: WebSocketMessage) {
         const chatMessage: ChatMessage = {
+            code: "chat_reply",
             id:   inboundMessage.id,
             role: "agent",
             text: inboundMessage.text,
         };
 
         this.store.update((messages) => {
-            const existing = messages.find((m) => m.id === chatMessage.id);
+            const index = messages.findIndex((m) => m.id === chatMessage.id);
 
-            if (existing) {
-                existing.text = chatMessage.text;
-                return [...messages];
+            if (index !== -1) {
+                return [
+                    ...messages.slice(0, index),
+                    { ...messages[index], text: chatMessage.text },
+                    ...messages.slice(index + 1),
+                ];
             } else {
                 return [...messages, chatMessage];
             }
@@ -162,6 +174,14 @@ class ChatStore {
     }
 
     /**
+     * Handle 'error' message from the server by displaying it in the chat window.
+     * @param inboundMessage - Received websocket message
+     */
+    private handle_error(inboundMessage: ErrorMessage) {
+        this.appendError(inboundMessage.text || i18n.value.WebsocketError.UnknownError);
+    }
+
+    /**
      * Handle a general websocket error like connection timeout etc. This simply
      * append an error message to the chat messages.
      */
@@ -176,6 +196,7 @@ class ChatStore {
      */
     private appendError(text: string) {
         const errorMessage: ChatMessage = {
+            code: "error",
             id:   crypto.randomUUID(),
             role: "error",
             text: text,

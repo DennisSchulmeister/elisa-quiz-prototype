@@ -6,7 +6,7 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-import json, os, typing, uuid
+import json, os, typing, uuid, copy
 
 from langchain.chat_models       import init_chat_model
 from langchain_core.messages     import HumanMessage
@@ -27,6 +27,9 @@ class _State(TypedDict):
     """
     messages: typing.Annotated[list, add_messages]
     """Message history. Automatically updated thanks to the `add_messages` reducer function."""
+
+    language: str
+    """Currently selected language by the user."""
 
 SendMessageCallback = typing.Callable[[str, dict], typing.Awaitable[None]]
 """Type hint for callback function that sends back chat answers to the client."""
@@ -74,11 +77,24 @@ class ChatAgent:
         LangGraph node to call the LLM chat model.
         """
         state["messages"] = self.trimmer.invoke(state["messages"])
-        prompt = self.prompt_template.invoke(dict(state))
+        last_message = state["messages"][-1]
+
+        if isinstance(last_message, HumanMessage):
+            # Add disclaimer to last human message the last second before sending it to the LLM,
+            # without spamming the message history with it.
+            prompt_template = PromptTemplate(input_variables=["text"], template = _USER_MESSAGE)
+            last_message = HumanMessage(content=prompt_template.format(text=last_message.content))
+            
+            state_copy = copy.deepcopy(state)
+            state_copy["messages"][-1] = last_message
+            prompt = self.prompt_template.invoke(dict(state_copy))
+        else:
+            prompt = self.prompt_template.invoke(dict(state))
+
         response = await self.chat_model.ainvoke(prompt)
         return {"response": response}
     
-    async def user_input(self, text: str, callback: SendMessageCallback) -> None:
+    async def user_input(self, text: str, language: str, callback: SendMessageCallback) -> None:
         """
         Invoke the graph with another user message.
         """
@@ -110,14 +126,14 @@ class ChatAgent:
 
                     consume_chunk(after)
 
-        prompt_template = PromptTemplate(input_variables=["text"], template = _USER_MESSAGE)
-        
         async for chunk, metadata in self.app.astream(
-            {"messages": [HumanMessage(content=prompt_template.format(text=text))]},
-            {"configurable": {"thread_id": self.thread_id}}
+            {"messages": [HumanMessage(content=text)], "language": language},
+            {"configurable": {"thread_id": self.thread_id}},
+            stream_mode="messages",
         ):
-            consume_chunk(chunk)
-            await callback("chat_reply", {"id": reply_id, "text": reply_text, "meta": metadata})
+            if hasattr(chunk, "content"):
+                consume_chunk(chunk.content) # type: ignore
+                await callback("chat_reply", {"id": reply_id, "text": reply_text, "meta": metadata})
         
         for json_block in json_blocks:
             await callback("quiz", {"data": json.loads(json_block)})
