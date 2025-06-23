@@ -33,7 +33,7 @@ SendMessageCallback = typing.Callable[[str, dict], typing.Awaitable[None]]
 
 class ChatAgent:
     """
-    Wrapper class that simplified integration with our websocket handler.
+    Wrapper class that simplifies integration with our websocket handler.
     Wraps a few building blocks from LangChain and LangGraph to build a
     very basic chat agent with streaming support.
     """
