@@ -28,10 +28,10 @@ Start view to choose the main UI language.
 
 <div id="container">
     <a href="#/main" onclick={() => $language = "en"}>
-        <img src={English} alt="{$i18n.AppShell.Language.en}">
+        <img src={English} alt="{$i18n.AppShell.Language.en}" style="animation-delay: -0.1s">
     </a>
     <a href="#/main" onclick={() => $language = "de"}>
-        <img src={German}  alt="{$i18n.AppShell.Language.de}">
+        <img src={German}  alt="{$i18n.AppShell.Language.de}" style="animation-delay: -0.5s">
     </a>
 </div>
 
@@ -52,10 +52,24 @@ Start view to choose the main UI language.
         max-width: 15em;
         transition: transform 0.5s, box-shadow 0.5s;
         cursor: pointer;
+
+        animation: spinning 1s ease-in-out alternate infinite;
     }
 
     img:hover {
         transform: scale(110%) rotate(2deg);
         box-shadow: 5px 5px 10px rgba(0,0,0, 0.33);
+    }
+
+    @keyframes spinning {
+        0% {
+            transform: rotate3d(1,2,0.25, -15deg);
+            box-shadow: -2px -2px 4px rgba(0,0,0, 0.33);
+        }
+
+        100% {
+            transform: rotate3d(1,2,0.25, 10deg);
+            box-shadow: 2px 2px 4px rgba(0,0,0, 0.33);
+        }
     }
 </style>
