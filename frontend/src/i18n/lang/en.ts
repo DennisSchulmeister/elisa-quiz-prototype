@@ -12,11 +12,18 @@
 export default {
     AppShell: {
         Title: "ELISA: AI Learning Quiz",
+        ChooseLanguage: "Choose Language",
+
+        Language: {
+            en: "English",
+            de: "German",
+        }
     },
 
     Chat: {
         MobileShowQuiz: "Return to Quiz",
         Disclaimer: "AI can make silly mistakes. You have been warned. 🥸",
+        Waiting: "Waiting …",
     },
 
     Quiz: {

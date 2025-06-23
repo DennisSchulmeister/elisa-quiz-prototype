@@ -8,10 +8,12 @@
  * License, or (at your option) any later version.
  */
 
+import LanguagePage from "./pages/language/LanguagePage.svelte";
 import ChatQuizPage from "./pages/chat-quiz/ChatQuizPage.svelte"
 import NotFoundPage from "./pages/errors/NotFoundPage.svelte";
 
 export default {
-    "/": ChatQuizPage,
-    "*": NotFoundPage,
+    "/":     LanguagePage,
+    "/main": ChatQuizPage,
+    "*":     NotFoundPage,
 };

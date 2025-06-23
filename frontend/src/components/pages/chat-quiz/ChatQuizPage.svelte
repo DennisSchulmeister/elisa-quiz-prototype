@@ -20,15 +20,16 @@ Main page with the chat conversation and the quiz game.
 
     let mobileShowChat = $state(true);
 
-    function toggleMobileView() {
+    function toggleMobileView(event: MouseEvent) {
         mobileShowChat = !mobileShowChat;
+        event.preventDefault();
     }
 </script>
 
 <div id="main_area">
     {#if $QuizStore.running}
         <section class="quiz {mobileShowChat ? 'mobileHidden' : ''}">
-            <a href="#top" class="toggle_view" onclick={toggleMobileView}>
+            <a href="#dummy" class="toggle_view" onclick={toggleMobileView}>
                 {$i18n.Quiz.MobileShowChat}
             </a>
 
@@ -37,12 +38,17 @@ Main page with the chat conversation and the quiz game.
     {/if}
 
     <section class="chat {mobileShowChat ? '' : 'mobileHidden'}">
-        <a href="#top" class="toggle_view" onclick={toggleMobileView}>
-            {$i18n.Chat.MobileShowQuiz}
-        </a>
+        {#if $QuizStore.running}
+            <a href="#dummy" class="toggle_view" onclick={toggleMobileView}>
+                {$i18n.Chat.MobileShowQuiz}
+            </a>
+        {/if}
 
         <Chat/>
     </section>
+</div>
+<div>
+    <a href="#/">{$i18n.AppShell.ChooseLanguage}</a>
 </div>
 
 <style>
@@ -61,13 +67,10 @@ Main page with the chat conversation and the quiz game.
         gap: 0.5em;
 
         width: 100%;
+    }
 
-        .toggle_view {
-            font-size: 90%;
-            color: darkblue;
-            text-decoration: none;
-            text-align: center;
-        }
+    a {
+        font-size: 90%;
     }
 
     @media all and (width < 700px) {

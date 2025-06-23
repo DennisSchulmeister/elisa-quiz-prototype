@@ -13,14 +13,19 @@ License, or (at your option) any later version.
 Main container for the chat conversation.
 -->
 <script lang="ts">
+    import ChatWaitingAnimation from "./ChatWaitingAnimation.svelte";
 </script>
 
 <div id="chat_container">
-    CHAT
+    <ChatWaitingAnimation size="big"/>
 </div>
 
 <style>
     #chat_container {
         flex: 1;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 </style>

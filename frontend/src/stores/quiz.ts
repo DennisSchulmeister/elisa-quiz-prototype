@@ -18,7 +18,7 @@ export type QuizGame = {
     subject:           string;
     level:             string;
     running:           boolean;
-    currentQuestion:   Question;
+    currentQuestion?:  Question;
     nextQuestions:     Question[];
     previousQuestions: Question[];
     correctAnswers:    number;
@@ -54,7 +54,7 @@ class QuizStore {
         subject:           "",
         level:             "",
         running:           false,
-        currentQuestion:   {},
+        currentQuestion:   undefined,
         nextQuestions:     [],
         previousQuestions: [],
         correctAnswers:    0,
@@ -67,25 +67,85 @@ class QuizStore {
      * @param messageData - Structure quiz data
      */
     updateFromBackend(messageData: InboundQuizMessageData) {
+        this.store.update(state => {
+            if (messageData.subject) state.subject = messageData.subject;
+            if (messageData.level)   state.level   = messageData.level;
+
+            if (Array.isArray(messageData.questions) && messageData.questions.length) {
+                state.nextQuestions = [
+                    ...state.nextQuestions,
+                    ...messageData.questions,
+                ];
+            }
+
+            if (state.nextQuestions.length) state.running = true;
+            return state;
+        });
     }
 
     /**
-     * Update state to display the next question.
+     * Update state to display the next question. After the last question the `running`
+     * state will remain `true`, so that the UI can render a game finished screen.
+     * After that the flag will be cleared.
+     * 
      * @paras answer - Chosen answer (-1 = skip question)
+     * @returns a boolean whether the answer is correct
      */
-    goon(answer: number) {
+    goon(answer: number): boolean {
+        let correctAnswer = false;
+
+        this.store.update(state => {
+            if (state.currentQuestion) {
+                correctAnswer = state.currentQuestion?.correct == answer;
+                if (correctAnswer) state.correctAnswers += 1;
+
+                state.previousQuestions.push(state.currentQuestion);
+                state.currentQuestion = state.nextQuestions.pop();
+            } else {
+                state.running = false;
+                state.nextQuestions = [];
+            }
+
+            return state;
+        });
+
+        return correctAnswer;
     }
 
     /**
-     * Skip the remaining questions to end the quiz early.
+     * Skip the remaining questions to end the quiz early. This leaves the `running` flag
+     * untouched so that the UI can display the game finished view.
      */
     abort() {
+        this.store.update(state => {
+            if (state.currentQuestion) {
+                state.previousQuestions = [...state.previousQuestions, state.currentQuestion, ...state.nextQuestions];
+            } else {
+                state.previousQuestions = [...state.previousQuestions, ...state.nextQuestions];
+            }
+
+            state.currentQuestion = undefined;
+            state.nextQuestions   = [];
+            
+            return state;
+        });
     }
 
     /**
      * Fully reset the game state, starting completely fresh.
      */
     reset() {
+        this.store.update(state => {
+            state.subject           = "";
+            state.level             = "";
+            state.running           = false;
+            state.currentQuestion   = undefined;
+            state.nextQuestions     = [];
+            state.previousQuestions = [];
+            state.correctAnswers    = 0;
+
+            return state;
+        });
     }
 }
 

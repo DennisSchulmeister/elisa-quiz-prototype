@@ -13,11 +13,18 @@ import type {I18N} from "../index.js";
 const i18n: I18N = {
     AppShell: {
         Title: "ELISA: KI-Lernquiz",
+        ChooseLanguage: "Sprache wählen",
+
+        Language: {
+            en: "Englisch",
+            de: "Deutsch",
+        }
     },
 
     Chat: {
         MobileShowQuiz: "Zurück zum Quiz",
         Disclaimer: "KI kann ziemlich doofe Fehler machen. Sei gewarnt. 🥸",
+        Waiting: "Warte …",
     },
 
     Quiz: {

@@ -41,8 +41,8 @@ npm run start
 
 This will start a development setup with the following things:
 
-* Uvicorn webserver in watch mode
-* Esbuild in watch mode
+* Uvicorn webserver in watch mode (listening on [localhost:8000](http://localhost:8000))
+* Esbuild in watch mode (listening on [localhost:8888](http://localhost:8888))
 
 In a typical production environment you might want to deploy the frontend on a static webserver
 like Apache or Caddy (recommended) and also use the webserver as a reverse-proxy in front of

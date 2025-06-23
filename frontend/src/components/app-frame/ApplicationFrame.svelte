@@ -19,6 +19,7 @@ to display the actual content based on the current URL.
     import routes            from "../routes.js";
 </script>
 
+
 <div id="app">
     <ApplicationHeader/>
     
