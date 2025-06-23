@@ -55,6 +55,11 @@ class ChatStore {
     private socket!: WebSocket;
 
     /**
+     * Flag that we are connected with the backend.
+     */
+    connected = false;
+
+    /**
      * Establish the WebSocket connection using the URL fetched from the backend.
      */
     async connect() {
@@ -67,7 +72,12 @@ class ChatStore {
             this.socket.addEventListener("error", this.handleError);
 
             // Send initial message to trigger greeting from LLM
-            this.socket.addEventListener("open", () => this.send("chat_input", {text: "Hi!", language: language.value}));
+            this.socket.addEventListener("open", () => {
+                this.connected = true;
+                this.send("chat_input", {text: "Hi!", language: language.value});
+            });
+
+            this.socket.addEventListener("close", () => this.connected = false);
         } catch (error) {
             let errorMessage = error instanceof Error ? error.message : String(error);
             this.appendError(i18n.value.WebsocketError.FetchURL + " " + errorMessage);
@@ -207,4 +217,3 @@ class ChatStore {
 }
 
 export const chat = new ChatStore();
-await chat.connect();

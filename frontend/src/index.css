@@ -37,6 +37,10 @@
 }
 
 /* Global settings */
+* {
+    scrollbar-width: thin;
+}
+
 html, body {
     margin: 0;
     padding: 0;

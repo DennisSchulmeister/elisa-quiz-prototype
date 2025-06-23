@@ -38,6 +38,10 @@ to display the actual content based on the current URL.
         flex: 1;
         display: flex;
         flex-direction: column;
+
+        box-sizing: border-box;
+        min-height: 100%;
+        max-height: 100%;
     }
 
     main {
@@ -45,7 +49,10 @@ to display the actual content based on the current URL.
         display: flex;
         flex-direction: column;
 
-        overflow-y: auto;
+        box-sizing: border-box;
+        min-height: 100%;
+        max-height: 100%;
+        
         padding: 1rem;
     }
 </style>

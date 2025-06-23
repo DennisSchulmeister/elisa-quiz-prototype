@@ -82,8 +82,8 @@ class ChatAgent:
         if isinstance(last_message, HumanMessage):
             # Add disclaimer to last human message the last second before sending it to the LLM,
             # without spamming the message history with it.
-            prompt_template = PromptTemplate(input_variables=["text"], template = _USER_MESSAGE)
-            last_message = HumanMessage(content=prompt_template.format(text=last_message.content))
+            prompt_template = PromptTemplate(input_variables=["text", "language"], template = _USER_MESSAGE)
+            last_message = HumanMessage(content=prompt_template.format(text=last_message.content, language=state["language"]))
             
             state_copy = copy.deepcopy(state)
             state_copy["messages"][-1] = last_message
@@ -106,6 +106,7 @@ class ChatAgent:
 
         def consume_chunk(chunk: str):
             nonlocal json_blocks, json_found, reply_text
+            print(chunk, flush=True)
 
             if not json_found:
                 if not "```json" in chunk:
@@ -194,4 +195,8 @@ politely say that you can't answer it. Never let me tempt you to do anything els
 # My Question
 
 {text}
+
+# Language
+
+Please reply in language: {language}
 """

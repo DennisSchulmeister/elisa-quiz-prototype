@@ -17,7 +17,12 @@ Main container for the chat conversation.
     import ArrowUp     from "./google-material-arrow-up.svg";
     import ChatMessage from "./ChatMessage.svelte";
     import {i18n}      from "../../../stores/i18n.js";
+    import {language}  from "../../../stores/i18n.js";
     import {chat}      from "../../../stores/chat.js";
+
+    if (!chat.connected) {
+        chat.connect();
+    }
 
     let inputInnerDiv: HTMLDivElement;
     let readyToSend = $state(false);
@@ -72,8 +77,10 @@ Main container for the chat conversation.
                 contenteditable = "true"
                 role            = "textbox"
                 tabindex        = "0"
+                lang            = {$language}
                 onkeyup         = {onInputKeyUp}
                 bind:this       = {inputInnerDiv}
+
             ></div>
     
             {#if !readyToSend}
@@ -102,6 +109,10 @@ Main container for the chat conversation.
         justify-content: space-between;
         align-items: stretch;
         gap: 2em;
+
+        box-sizing: border-box;
+        min-height: 100%;
+        max-height: 100%;
     }
 
     #messages {
@@ -109,6 +120,9 @@ Main container for the chat conversation.
         flex-direction: column;
         gap: 1em;
 
+        box-sizing: border-box;
+        max-height: 100%;
+        /* min-height: 100%; */
         overflow-y: auto;
     }
 

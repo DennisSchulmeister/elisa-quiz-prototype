@@ -63,6 +63,10 @@ Main page with the chat conversation and the quiz game.
         display: flex;
         flex-direction: row;
         justify-content: center;
+
+        box-sizing: border-box;
+        min-height: 100%;
+        max-height: 100%;
     }
 
     section {
@@ -72,6 +76,10 @@ Main page with the chat conversation and the quiz game.
         align-items: stretch;
         gap: 0.5em;
 
+        box-sizing: border-box;
+        min-height: 100%;
+        max-height: 100%;
+        
         width: 100%;
     }
 
