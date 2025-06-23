@@ -14,6 +14,15 @@ export default {
         Title: "ELISA: AI Learning Quiz",
     },
 
+    Chat: {
+        MobileShowQuiz: "Return to Quiz",
+        Disclaimer: "AI can make silly mistakes. You have been warned. 🥸",
+    },
+
+    Quiz: {
+        MobileShowChat: "Show Chat",
+    },
+
     Error404: {
         TriggerLink: "Trigger 404 Page",
         Title:       "Page not found",

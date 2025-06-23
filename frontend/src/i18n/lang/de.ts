@@ -15,6 +15,15 @@ const i18n: I18N = {
         Title: "ELISA: KI-Lernquiz",
     },
 
+    Chat: {
+        MobileShowQuiz: "Zurück zum Quiz",
+        Disclaimer: "KI kann ziemlich doofe Fehler machen. Sei gewarnt. 🥸",
+    },
+
+    Quiz: {
+        MobileShowChat: "Zeige Chat",
+    },
+
     Error404: {
         TriggerLink: "404 Seite auslösen",
         Title:       "Seite nicht gefunden",
