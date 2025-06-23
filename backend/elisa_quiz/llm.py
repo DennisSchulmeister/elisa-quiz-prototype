@@ -127,7 +127,6 @@ class ChatAgent:
         """
         reply_id    = str(uuid.uuid4())
         reply_text  = ""
-
         json_blocks = []
         json_found  = False
 
@@ -135,23 +134,30 @@ class ChatAgent:
             nonlocal json_blocks, json_found, reply_text
 
             if not json_found:
-                if not "```json" in chunk:
-                    reply_text += chunk
-                else:
+                reply_text += chunk
+
+                if "```json" in reply_text:
                     json_found = True
-                    before, after = chunk.split("```json", maxsplit=1)
-                    reply_text += before
+                    json_blocks.append("")
+                    splitted = chunk.split("```json", maxsplit=1)
 
-                    consume_chunk(after)
+                    if len(splitted) == 1:
+                        reply_text = splitted
+                    else:
+                        reply_text, remaining_chunk = splitted
+                        consume_chunk(remaining_chunk)
             else:
-                if not "```" in chunk:
-                    json_blocks[-1] += chunk
-                else:
-                    json_found = False
-                    before, after = chunk.split("```", maxsplit=1)
-                    json_blocks[-1] += before
+                json_blocks[-1] += chunk
 
-                    consume_chunk(after)
+                if "```" in json_blocks[-1]:
+                    json_found = False
+                    splitted = chunk.split("```", maxsplit=1)
+
+                    if len(splitted) == 1:
+                        json_blocks[-1] = splitted
+                    else:    
+                        json_blocks[-1], remaining_chunk = splitted
+                        consume_chunk(remaining_chunk)
 
         async for chunk, metadata in self.app.astream(
             {"user_input": text, "language": language},
