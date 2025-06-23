@@ -24,6 +24,13 @@ const i18n: I18N = {
         MobileShowChat: "Zeige Chat",
     },
 
+    WebsocketError: {
+        FetchURL:           "Fehler beim Abrufen der Websocket URL.",
+        NotConnected:       "Keine Verbindung mit dem Backend. Fehlercode: $code$",
+        UnknownError:       "Während der Kommunikation mit dem Backend ist ein unbekannter Fehler aufgetreten.",
+        UnknownMessageCode: "Unbekannter Nachrichtencode: $code$",
+    },
+
     Error404: {
         TriggerLink: "404 Seite auslösen",
         Title:       "Seite nicht gefunden",

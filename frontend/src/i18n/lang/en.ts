@@ -23,6 +23,13 @@ export default {
         MobileShowChat: "Show Chat",
     },
 
+    WebsocketError: {
+        FetchURL:           "Failed to fetch websocket URL.",
+        NotConnected:       "No connection to the backend. Error code: $code$",
+        UnknownError:       "An unknown error occurred while communicating with the backend.",
+        UnknownMessageCode: "Unrecognized message code: $code$",
+    },
+
     Error404: {
         TriggerLink: "Trigger 404 Page",
         Title:       "Page not found",

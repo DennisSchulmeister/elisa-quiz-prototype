@@ -120,7 +120,7 @@ class ChatAgent:
             await callback("chat_reply", {"id": reply_id, "text": reply_text, "meta": metadata})
         
         for json_block in json_blocks:
-            await callback("json", {"data": json.loads(json_block)})
+            await callback("quiz", {"data": json.loads(json_block)})
 
 _SYSTEM_PROMPT="""
 # Procedure
