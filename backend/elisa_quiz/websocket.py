@@ -93,4 +93,4 @@ class ChatWebSocketHandler:
         """
         text     = message.get("text", "")
         language = message.get("language", "en")
-        await self.chat_agent.user_input(text, language, self.send_message)
+        await self.chat_agent.invoke_with_new_user_message(text, language, self.send_message)

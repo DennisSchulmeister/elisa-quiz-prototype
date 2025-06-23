@@ -63,40 +63,46 @@ Main container for the chat conversation.
     </div>
 
     <!-- User input field -->
-    <div
-        id       = "user-input"
-        role     = "dialog"
-        tabindex = "0"
-        onclick  = {focusInputInnerDiv}
-        onkeyup  = {onInputKeyUp}
-        onblur   = {updateInputState}
-    >
-        <div class="input-field-placeholder">
-            <div
-                class           = "input-field"
-                contenteditable = "true"
-                role            = "textbox"
-                tabindex        = "0"
-                lang            = {$language}
-                onkeyup         = {onInputKeyUp}
-                bind:this       = {inputInnerDiv}
-
-            ></div>
-    
-            {#if !readyToSend}
-                <div class="placeholder">
-                    {$i18n.Chat.Placeholder}
-                </div>
-            {/if}
-        </div>
-
-        <button
-            title        = {$i18n.Chat.TooltipSend}
-            class:active = {readyToSend}
-            onclick      = {sendMessage}
+    <div>
+        <div
+            id       = "user-input"
+            role     = "dialog"
+            tabindex = "0"
+            onclick  = {focusInputInnerDiv}
+            onkeyup  = {onInputKeyUp}
+            onblur   = {updateInputState}
         >
-            <img src={ArrowUp} alt={$i18n.Chat.TooltipSend}>
-        </button>
+            <div class="input-field-placeholder">
+                <div
+                    class           = "input-field"
+                    contenteditable = "true"
+                    role            = "textbox"
+                    tabindex        = "0"
+                    lang            = {$language}
+                    onkeyup         = {onInputKeyUp}
+                    bind:this       = {inputInnerDiv}
+    
+                ></div>
+        
+                {#if !readyToSend}
+                    <div class="placeholder">
+                        {$i18n.Chat.Placeholder}
+                    </div>
+                {/if}
+            </div>
+    
+            <button
+                title        = {$i18n.Chat.TooltipSend}
+                class:active = {readyToSend}
+                onclick      = {sendMessage}
+            >
+                <img src={ArrowUp} alt={$i18n.Chat.TooltipSend}>
+            </button>
+        </div>
+    
+        <div id="disclaimer">
+            {$i18n.Chat.Disclaimer}
+        </div>
     </div>
 </div>
 
@@ -134,6 +140,7 @@ Main container for the chat conversation.
 
         padding: 1em;
         border-radius: 0.5em;
+        margin-bottom: 0.75em;
 
         display: flex;
         flex-direction: row;
@@ -176,5 +183,11 @@ Main container for the chat conversation.
                 width: 100%;
             }
         }
+    }
+
+    #disclaimer {
+        font-size: small;
+        text-align: center;
+        color: grey;
     }
 </style>
