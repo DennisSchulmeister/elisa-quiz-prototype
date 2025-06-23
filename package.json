@@ -1,0 +1,14 @@
+{
+    "name": "@dschulmeis/elisa-ai-quiz",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "start": "conc -c auto npm:start:*",
+        "start:backend": "cd backend && python3 main.py --reload",
+        "start:frontend": "cd frontend && npm start"
+    },
+    "devDependencies": {
+        "concurrently": "^9.1.2"
+    }
+}

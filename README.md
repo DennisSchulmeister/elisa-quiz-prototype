@@ -1,4 +1,4 @@
-Elisa: Learning Quizzes (Prototype)
-===================================
+Elisa: Learning Quizzes
+=======================
 
-TODO: Propper README
+TODO: Proper README

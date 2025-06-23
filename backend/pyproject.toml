@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "elisa-ai-quiz-backend"
+version = "0.1.0"
+description = "AI Learning Quizzes (backend)"
+authors = ["Dennis Schulmeister-Zimolong <dennis@wpvs.de>"]
+homepage = "https://openbook.studio"
+repository = "https://github.com/DennisSchulmeister/elisa-quiz"
+license = "AGPL-3.0"
+readme = "README.md"
+
+# Use poetry for dependency management but not for packaging, since at least
+# for now we are not publishing a python packages on PyPI. Maybe we want to do
+# in future, in which case we need to reconsider some of the project structure.
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.13"
+fastapi = "^0.115.13"
+websockets = "^15.0.1"
+uvicorn = "^0.34.3"
+python-dotenv = "^1.1.0"
+langchain = {extras = ["openai"], version = "^0.3.26"}
+langgraph = "^0.4.8"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
