@@ -33,4 +33,4 @@ export const fallbackLanguage = "en";
 /**
  * Default language when no other language has been chosen.
  */
-export const defaultLanguage = "en";
+export const defaultLanguage = localStorage.getItem("language") || "en";

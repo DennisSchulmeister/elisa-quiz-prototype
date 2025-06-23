@@ -106,7 +106,6 @@ class ChatAgent:
 
         def consume_chunk(chunk: str):
             nonlocal json_blocks, json_found, reply_text
-            print(chunk, flush=True)
 
             if not json_found:
                 if not "```json" in chunk:

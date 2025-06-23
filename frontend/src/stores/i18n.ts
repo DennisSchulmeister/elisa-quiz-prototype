@@ -52,14 +52,19 @@ export const i18n = {
  */
 export const language = {
     subscribe: _language.subscribe,
-    set:       _language.set,
     update:    _language.update,
+
+    set: (value: string) => {
+        localStorage.setItem("language", value);
+        _language.set(value);
+    },
 
     get value() {
         return get(_language);
     },
 
     set value(value) {
+        localStorage.setItem("language", value);
         _language.set(value);
     },
 };
