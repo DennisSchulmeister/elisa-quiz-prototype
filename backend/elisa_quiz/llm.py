@@ -148,7 +148,6 @@ in the following example:
 
 ```json
 {
-    "type": "quiz",
     "subject": "Name of the selected topic",
     "level": "Difficulty of the quiz",
     "questions": [

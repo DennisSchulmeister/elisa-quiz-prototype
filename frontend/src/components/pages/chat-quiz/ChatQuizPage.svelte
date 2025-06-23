@@ -16,7 +16,7 @@ Main page with the chat conversation and the quiz game.
     import Chat          from "./Chat.svelte"
     import Quiz          from "./Quiz.svelte"
     import {i18n}        from "../../../stores/i18n.js";
-    import {quizRunning} from "../../../stores/quiz.js";
+    import QuizStore     from "../../../stores/quiz.js";
 
     let mobileShowChat = $state(true);
 
@@ -26,7 +26,7 @@ Main page with the chat conversation and the quiz game.
 </script>
 
 <div id="main_area">
-    {#if $quizRunning}
+    {#if $QuizStore.running}
         <section class="quiz {mobileShowChat ? 'mobileHidden' : ''}">
             <a href="#top" class="toggle_view" onclick={toggleMobileView}>
                 {$i18n.Quiz.MobileShowChat}

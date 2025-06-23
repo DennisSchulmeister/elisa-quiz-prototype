@@ -11,6 +11,7 @@
 import type { Writable } from "svelte/store";
 import { writable }      from "svelte/store";
 import { _, i18n}        from "./i18n.js";
+import QuizStore         from "./quiz.js";
 
 /**
  * Websocket message exchanged between frontend and backend. This is deliberately
@@ -24,7 +25,7 @@ type WebSocketMessage = {
 /**
  A single chat message to be displayed in the UI.
  */
-type ChatMessage = {
+export type ChatMessage = {
     id: string;
     role: "user" | "agent" | "error";
     text: string;
@@ -34,17 +35,17 @@ type ChatMessage = {
  * A reactive WebSocket store that manages a connection to the backend server
  * and synchronizes chat messages between the client and server.
  */
-class WebSocketStore {
-    /**
-     * The actual websocket connection
-     */
-    private socket!: WebSocket;
-
+class ChatStore {
     /**
      * Sevelte store which holds all chat messages
      */
     private store: Writable<ChatMessage[]> = writable([]);
     subscribe = this.store.subscribe;
+
+    /**
+     * Websocket connection to the backend
+     */
+    private socket!: WebSocket;
 
     /**
      * Establish the WebSocket connection using the URL fetched from the backend.
@@ -149,7 +150,11 @@ class WebSocketStore {
      * @param inboundMessage - Received websocket message
      */
     private handle_quiz(inboundMessage: WebSocketMessage) {
-        // TODO:
+        let quizData = inboundMessage.data;
+        
+        if (quizData) {
+            QuizStore.updateFromBackend(quizData);
+        }
     }
 
     /**
@@ -157,7 +162,6 @@ class WebSocketStore {
      * append an error message to the chat messages.
      */
     private handleError(error: Event): void {
-    
         const errorText = (error instanceof Error && error.message) ? error.message : i18n.value.WebsocketError.UnknownError;
         this.appendError(errorText);
     }
@@ -177,5 +181,5 @@ class WebSocketStore {
     }
 }
 
-export const wsMessages = new WebSocketStore();
-await wsMessages.connect();
+export const chat = new ChatStore();
+await chat.connect();
