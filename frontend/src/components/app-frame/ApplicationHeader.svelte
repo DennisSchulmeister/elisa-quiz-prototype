@@ -14,8 +14,9 @@ Application header that is permanently visible at the top of the screen. Shows t
 app title and some information about the quiz.
 -->
 <script lang="ts">
-    import {i18n}    from "../../stores/i18n.js";
-    import QuizStore from "../../stores/quiz.js";
+    import {i18n}         from "../../stores/i18n.js";
+    import {pageTitle}    from "../../stores/page.js";
+    import {pageSubTitle} from "../../stores/page.js";
 </script>
 
 <header>
@@ -24,8 +25,8 @@ app title and some information about the quiz.
         {$i18n.AppShell.Title}
     </div>
     <div class="quiz-title">
-        <span class="title">{$QuizStore.subject}</span>
-        <span class="level">{$QuizStore.level}</span>
+        <span class="title">{$pageTitle}</span>
+        <span class="level">{$pageSubTitle}</span>
     </div>
 </header>
 

@@ -13,11 +13,17 @@ License, or (at your option) any later version.
 Main page with the chat conversation and the quiz game.
 -->
 <script lang="ts">
-    import Chat          from "./Chat.svelte"
-    import Quiz          from "./Quiz.svelte"
-    import {i18n}        from "../../../stores/i18n.js";
-    import QuizStore     from "../../../stores/quiz.js";
+    import Chat           from "./Chat.svelte"
+    import Quiz           from "./Quiz.svelte"
 
+    import {i18n}         from "../../../stores/i18n.js";
+    import QuizStore      from "../../../stores/quiz.js";
+    import {pageTitle}    from "../../../stores/page.js";
+    import {pageSubTitle} from "../../../stores/page.js";
+
+    $pageTitle    = $QuizStore.subject;
+    $pageSubTitle = $QuizStore.level;
+    
     let mobileShowChat = $state(true);
 
     function toggleMobileView(event: MouseEvent) {

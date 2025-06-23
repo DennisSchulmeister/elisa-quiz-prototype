@@ -19,33 +19,26 @@ Start view to choose the main UI language.
     import German      from "./german.jpg";
     import {i18n}      from "../../../stores/i18n.js";
     import {language}  from "../../../stores/i18n.js";
+    import {pageTitle} from "../../../stores/page.js";
+    import {pageSubTitle} from "../../../stores/page.js";
+
+    $pageTitle    = $i18n.AppShell.ChooseLanguage;
+    $pageSubTitle = "";
 </script>
 
 <div id="container">
-    <h1>{$i18n.AppShell.ChooseLanguage}</h1>
-
-    <div id="inner">
-        <a href="#/main" onclick={() => $language = "en"}>
-            <img src={English} alt="{$i18n.AppShell.Language.en}">
-        </a>
-        <a href="#/main" onclick={() => $language = "de"}>
-            <img src={German}  alt="{$i18n.AppShell.Language.de}">
-        </a>
-    </div>
+    <a href="#/main" onclick={() => $language = "en"}>
+        <img src={English} alt="{$i18n.AppShell.Language.en}">
+    </a>
+    <a href="#/main" onclick={() => $language = "de"}>
+        <img src={German}  alt="{$i18n.AppShell.Language.de}">
+    </a>
 </div>
 
 <style>
     #container {
         flex: 1;
 
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        gap: 2em;
-    }
-
-    #inner {
         display: flex;
         flex-direction: row;
         justify-content: center;
