@@ -22,6 +22,8 @@ export default {
 
     Chat: {
         MobileShowQuiz: "Return to Quiz",
+        Placeholder: "Type something …",
+        TooltipSend: "Send Message",
         Disclaimer: "AI can make silly mistakes. You have been warned. 🥸",
         Waiting: "Waiting …",
     },

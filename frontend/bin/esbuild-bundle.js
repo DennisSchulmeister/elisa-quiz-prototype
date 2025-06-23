@@ -17,7 +17,7 @@ esbuild.build({
     plugins: [sveltePlugin()],
     
     loader: {
-        ".svg": "text",
+        ".svg": "dataurl",
         ".ttf": "dataurl",
         ".woff": "dataurl",
         ".woff2": "dataurl",

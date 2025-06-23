@@ -23,6 +23,8 @@ const i18n: I18N = {
 
     Chat: {
         MobileShowQuiz: "Zurück zum Quiz",
+        Placeholder: "Schreibe etwas …",
+        TooltipSend: "Nachricht abschicken",
         Disclaimer: "KI kann ziemlich doofe Fehler machen. Sei gewarnt. 🥸",
         Waiting: "Warte …",
     },

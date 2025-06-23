@@ -58,6 +58,9 @@ class ChatStore {
             this.socket = new WebSocket(wsUrl);
             this.socket.addEventListener("message", this.handleMessage);
             this.socket.addEventListener("error", this.handleError);
+
+            // Send initial message to trigger greeting from LLM
+            this.send("chat_input", {text: "Hi!"});
         } catch (error) {
             let errorMessage = error instanceof Error ? error.message : String(error);
             this.appendError(i18n.value.WebsocketError.FetchURL + " " + errorMessage);
@@ -104,6 +107,7 @@ class ChatStore {
      */
     private handleMessage = (event: MessageEvent) => {
         try {
+            console.log(event);
             const message: WebSocketMessage = JSON.parse(event.data);
 
             const handler = `handle_${message.code}`;
