@@ -19,7 +19,7 @@ freedom and not in beer. 🍺
 
 Right now it is an prototype and experiment that I did with students to build AI
 learning tools. Actually it is not very fancy. But hopefully it is still useful and
-given enough community interest many features could be added. Let's get in touch, to
+given enough community interest many features could be added. Let's get in touch to
 share ideas and get the stone rolling.
 
 More Information
@@ -50,6 +50,7 @@ also proxy web socket connections since frontend and backend communicate exclusi
 (to enable two-way message exchange in real-time). [Caddy](https://caddyserver.com/) is field proven
 and super easy to setup (including automatic SSL certificate management!).
 
+1. Get API key for your Large Language Model
 1. Download the source code (e.g. with Git)
 1. Install all dependencies (with `npm` and `poetry`)
 1. Run the backend server (e.g. with the provided SystemD service file)
@@ -57,17 +58,19 @@ and super easy to setup (including automatic SSL certificate management!).
 1. Done!
 
 Or use the provided Docker Compose setup for a plug-and-play solution. The following shell commands
-show a manual setup on a typical Linux box (here Debian or Ubuntu):
+show a manual setup on a typical Linux box (here Debian or Ubuntu). Please note, that you need to
+have an API key for [OpenAI](https://platform.openai.com/) or any other
+[LLM supported by LangChain](https://python.langchain.com/api_reference/langchain/chat_models/langchain.chat_models.base.init_chat_model.html)
 
 ```sh
-# Install python runtime and poetry package manager (needed to build and run the backend)
+# Install python runtime and poetry package manager (needed to run the backend)
 sudo apt install python3 python3-poetry
 
 # Install NodeJS and NPM package manager (only needed to build the frontend)
 sudo apt install nodejs npm
 
 # Download source code
-# NOTE: When not installing to /opt/elisa-quiz please adopt the paths in the elisa-quiz.service file
+# NOTE: When not installing to /opt/elisa-quiz please adopt paths in elisa-quiz.service
 cd /opt
 sudo git clone https://github.com/DennisSchulmeister/elisa-quiz.git
 
@@ -84,6 +87,10 @@ npm run build
 cd ../backend
 sudo poetry env use $(which python)
 sudo poetry install
+
+# Create .env file with OpenAI API key (or others supported by LangChain)
+sudo cp .env.template .env
+sudo nano .env
 
 # Create and start SystemD service
 cd ..
@@ -118,12 +125,12 @@ your-domain.com {
     root * /opt/elisa-quiz/frontend/static/_bundle
     reverse_proxy /ws/* localhost:8000
 
-	basic_auth {
-		# Username "elisa", password "elisa"
+    basic_auth {
+        # Username "elisa", password "elisa"
         # See: https://caddyserver.com/docs/caddyfile/directives/basic_auth
         # Use "caddy hash-password" to create the password hash
 		elisa $2a$14$39ezPLC8X9ODipWKGrVY/OEcNVULLLudQuUtEWxFNQUnaGyXZFNhK
-	}
+    }
 }
 ```
 

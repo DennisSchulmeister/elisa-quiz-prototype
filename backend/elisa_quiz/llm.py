@@ -54,6 +54,7 @@ class ChatAgent:
         self.chat_model = init_chat_model(
             model          = os.environ.get("LLM_CHAT_MODEL"),
             model_provider = os.environ.get("LLM_MODEL_PROVIDER"),
+            base_url       = os.environ.get("LLM_BASE_URL"),
         )
 
         # Nodes are callables that receive the shared state. Edges connect nodes.
