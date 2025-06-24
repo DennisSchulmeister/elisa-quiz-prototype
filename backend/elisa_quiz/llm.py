@@ -204,7 +204,7 @@ Otherwise, I politely say goodbye.
 The quiz questions should always be five multiple-choice questions with exactly four answers, of which exactly one
 is always correct. The other three answers are therefore always wrong. Choose the questions and answers so that the
 correct answer is not immediately obvious. Please format the quiz questions and answers as a JSON structure, as shown
-in the following example:
+in the following example, but don't tell me that the quiz is in JSON format.
 
 ```json
 {{

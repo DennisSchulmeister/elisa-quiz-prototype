@@ -30,6 +30,7 @@ export default {
 
     Quiz: {
         MobileShowChat: "Show Chat",
+        QuestionNumber: "Question $1:",
     },
 
     WebsocketError: {

@@ -65,6 +65,10 @@ Main container for the chat conversation.
 
     <!-- User input field -->
     <div>
+        <div id="disclaimer">
+            {$i18n.Chat.Disclaimer}
+        </div>
+
         <div
             id       = "user-input"
             role     = "dialog"
@@ -99,10 +103,6 @@ Main container for the chat conversation.
             >
                 <img src={ArrowUp} alt={$i18n.Chat.TooltipSend}>
             </button>
-        </div>
-    
-        <div id="disclaimer">
-            {$i18n.Chat.Disclaimer}
         </div>
     </div>
 </div>
@@ -141,7 +141,7 @@ Main container for the chat conversation.
 
         padding: 1em;
         border-radius: 0.5em;
-        margin-bottom: 0.75em;
+        margin-top: 0.75em;
 
         display: flex;
         flex-direction: row;

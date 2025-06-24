@@ -25,12 +25,13 @@ const i18n: I18N = {
         MobileShowQuiz: "Zurück zum Quiz",
         Placeholder: "Schreibe etwas …",
         TooltipSend: "Nachricht abschicken",
-        Disclaimer: "KI kann ziemlich doofe Fehler machen. Sei gewarnt. 🥸",
+        Disclaimer: "KI kann eigenartige Fehler machen. Sei gewarnt. 🥸",
         Waiting: "Warte …",
     },
 
     Quiz: {
         MobileShowChat: "Zeige Chat",
+        QuestionNumber: "Frage $1:",
     },
 
     WebsocketError: {

@@ -21,8 +21,10 @@ Main page with the chat conversation and the quiz game.
     import {pageTitle}    from "../../../stores/page.js";
     import {pageSubTitle} from "../../../stores/page.js";
 
-    $pageTitle    = $QuizStore.subject;
-    $pageSubTitle = $QuizStore.level;
+    $effect.pre(() => {
+        $pageTitle    = $QuizStore.subject;
+        $pageSubTitle = $QuizStore.level;
+    })
     
     let mobileShowChat = $state(true);
 
@@ -63,6 +65,7 @@ Main page with the chat conversation and the quiz game.
         display: flex;
         flex-direction: row;
         justify-content: center;
+        gap: 1em;
 
         box-sizing: border-box;
         min-height: 100%;
