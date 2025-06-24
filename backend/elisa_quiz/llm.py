@@ -192,6 +192,7 @@ Please stick to the following procedure:
 3. Ask me what subject I want to learn and how well I already know it.
 4. Create suitable quiz questions and answers that are adapted to my level of knowledge.
 5. Ask me if everything is clear or if you should give me some hints for the quiz.
+   Also tell me that you will give detailed feedback after I answered all questions.
 6. Later I will tell you my answers so that you can give me feedback.
 7. At the end, ask me if I want you to create more quiz questions (maybe more difficult ones now),
    or if I want to learn a new topic.
@@ -204,7 +205,7 @@ Otherwise, I politely say goodbye.
 The quiz questions should always be five multiple-choice questions with exactly four answers, of which exactly one
 is always correct. The other three answers are therefore always wrong. Choose the questions and answers so that the
 correct answer is not immediately obvious. Please format the quiz questions and answers as a JSON structure, as shown
-in the following example, but don't tell me that the quiz is in JSON format.
+in the following example:
 
 ```json
 {{
@@ -222,7 +223,8 @@ in the following example, but don't tell me that the quiz is in JSON format.
 
 "correct" is the index (counted from zero) of the correct answer.
 
-Never repeat quiz questions and answers in natural language!
+* Never repeat quiz questions and answers in natural language!
+* Don't tell me that the quiz is in JSON format.
 """
 
 _SUMMARY_PROMPT = """
