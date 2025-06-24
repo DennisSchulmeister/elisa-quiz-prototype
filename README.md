@@ -11,13 +11,13 @@ Description
 
 ![Screenshot](screenshot.png)
 
-”Hi, I am Elisa, your personal learning assistant“–a learning assistant that is able
+”Hi, I am Elisa, your personal learning assistant“–A learning assistant that is able
 to explain almost any topic and create quizzes to test your learning progress. It is
 small, it is fun, it is engaging and easy to use. It is a chatbot backed by Large
 Language Models or AI as most people would say. 🪄 And it is Free Software - as in
 freedom and not in beer. 🍺
 
-Right now it is an prototype and experiment that I did with students to build an AI
+Right now it is an prototype and experiment that I did with students to build AI
 learning tools. Actually it is not very fancy. But hopefully it is still useful and
 given enough community interest many features could be added. Let's get in touch, to
 share ideas and get the stone rolling.
