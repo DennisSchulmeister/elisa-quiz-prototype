@@ -135,13 +135,15 @@ sudo journalctl -fu caddy
 ```
 
 Example Caddy configuration, assuming the backend server listens on `localhost:8000`.
+This is bascially the same file as [frontend/docker/Caddyfile](./frontend/docker/Caddyfile)
+in the source-tree minus the dynamic configuration with environment variables.
 
 ```
 your-domain.com {
     encode gzip
 
     file_server
-    root * /opt/elisa-quiz/frontend/static/_bundle
+    root * /opt/elisa-quiz/frontend/static
     respond /api.url "https://your-domain.com"
 
     reverse_proxy /ws/* localhost:8000

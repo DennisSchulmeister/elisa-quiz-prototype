@@ -18,4 +18,4 @@ RUN npm run build
 FROM caddy:alpine
 
 COPY docker/Caddyfile /etc/caddy/Caddyfile
-COPY --from=build /app/static/_bundle /srv
+COPY --from=build /app/static /srv
