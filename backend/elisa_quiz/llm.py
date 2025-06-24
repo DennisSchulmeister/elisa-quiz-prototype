@@ -259,6 +259,8 @@ If you generated a quiz for me, please keep it for reference:
 # Language
 
 Please write the summary in the language: {language}
+
+Focus on what we said last. If necessary shorten older interactions.
 """
 
 _EXTEND_SUMMARY_MESSAGE = """
