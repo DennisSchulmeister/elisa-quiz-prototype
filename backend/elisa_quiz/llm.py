@@ -57,38 +57,17 @@ class ChatAgent:
         )
 
         # Nodes are callables that receive the shared state. Edges connect nodes.
+        # Nodes return state updates (only what needs to be changed).
         workflow = StateGraph(state_schema=_State)
 
-        workflow.add_edge(START, "summarize_past_conversation")
-        workflow.add_node("summarize_past_conversation", self._summarize_past_conversation)
-
-        workflow.add_edge("summarize_past_conversation", "send_user_message_to_llm")
+        workflow.add_edge(START, "send_user_message_to_llm")
         workflow.add_node("send_user_message_to_llm", self._send_user_message_to_llm)
+
+        workflow.add_edge("send_user_message_to_llm", "summarize_past_conversation")
+        workflow.add_node("summarize_past_conversation", self._summarize_past_conversation)
 
         memory = MemorySaver()
         self.app = workflow.compile(checkpointer = memory)
-
-    async def _summarize_past_conversation(self, state: _State):
-        """
-        LangGraph node that first asks the LLM to update the summary of the previous conversation,
-        so that when the actual user message is sent to the LLM the summary can be provided as a
-        context. We use this strategy because a simple message buffer has shown that the LLM often
-        repeats itself by repeating parts of the previous answers with each message.
-        """
-        if not state.get("buffer", []):
-            return {"summary": ""}
-        
-        template = _EXTEND_SUMMARY_MESSAGE if state.get("summary", "") else _NEW_SUMMARY_MESSAGE
-        prompt_template = PromptTemplate(input_variables=["buffer", "summary", "language"], template=template)
-
-        prompt = prompt_template.invoke({
-            "buffer":   state.get("buffer"),
-            "summary":  state.get("summary"),
-            "language": state.get("language"),
-        })
-
-        response = self.chat_model.invoke(prompt)
-        return {"summary": response.content, "buffer": []}
         
     async def _send_user_message_to_llm(self, state: _State):
         """
@@ -97,7 +76,7 @@ class ChatAgent:
         """
         prompt_template = ChatPromptTemplate.from_messages([
             SystemMessagePromptTemplate.from_template(_SYSTEM_PROMPT),
-            SystemMessagePromptTemplate.from_template(_SUMMARY_PROMPT if state["summary"] else ""),
+            SystemMessagePromptTemplate.from_template(_SUMMARY_PROMPT if state.get("summary", "") else ""),
             HumanMessagePromptTemplate.from_template(_USER_MESSAGE),
         ])
 
@@ -121,6 +100,28 @@ class ChatAgent:
             ],
         }
     
+    async def _summarize_past_conversation(self, state: _State):
+        """
+        LangGraph node that first asks the LLM to update the summary of the previous conversation,
+        so that when the actual user message is sent to the LLM the summary can be provided as a
+        context. We use this strategy because a simple message buffer has shown that the LLM often
+        repeats itself by repeating parts of the previous answers with each message.
+        """
+        if not state.get("buffer", []):
+            return {"summary": ""}
+        
+        template = _EXTEND_SUMMARY_MESSAGE if state.get("summary", "") else _NEW_SUMMARY_MESSAGE
+        prompt_template = PromptTemplate(input_variables=["buffer", "summary", "language"], template=template)
+
+        prompt = prompt_template.invoke({
+            "buffer":   state.get("buffer"),
+            "summary":  state.get("summary"),
+            "language": state.get("language"),
+        })
+
+        response = self.chat_model.invoke(prompt)
+        return {"summary": response.content, "buffer": []}
+
     async def invoke_with_new_user_message(self, text: str, language: str, callback: SendMessageCallback) -> None:
         """
         Called from the websocket handler to invoke the graph with another user message.
@@ -198,7 +199,7 @@ Please stick to the following procedure:
    or if I want to learn a new topic.
 
 If I decide in favour of a new topic or more quiz questions, go back to step 4: Creating the quiz questions.
-Otherwise, I politely say goodbye.
+Otherwise, politely say goodbye and offer that I can always come back for more.
 
 # Quiz questions
 
