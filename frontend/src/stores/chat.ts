@@ -42,7 +42,7 @@ export interface ErrorMessage extends WebSocketMessage {
  * A reactive WebSocket store that manages a connection to the backend server
  * and synchronizes chat messages between the client and server.
  */
-class ChatStore {
+export class ChatStore {
     /**
      * Sevelte store which holds all chat messages
      */
@@ -90,7 +90,7 @@ class ChatStore {
      * 
      * @param text - Message text
      */
-    sendChatMessage(text: string) {
+    sendChatMessage(text: string, hidden: boolean = false) {
         const chatMessage: ChatMessage = {
             code:     "chat_input",
             id:       crypto.randomUUID(),
@@ -99,7 +99,10 @@ class ChatStore {
             language: language.value,
         };
 
-        this.store.update((messages) => [...messages, chatMessage]);
+        if (!hidden) {
+            this.store.update((messages) => [...messages, chatMessage]);
+        }
+        
         this.send("chat_input", {text: text, language: language.value});
     }
 
@@ -217,3 +220,4 @@ class ChatStore {
 }
 
 export const chat = new ChatStore();
+QuizStore.setChat(chat);

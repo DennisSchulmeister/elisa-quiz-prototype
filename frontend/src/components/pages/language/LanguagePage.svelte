@@ -50,15 +50,14 @@ Start view to choose the main UI language.
     img {
         display: block;
         max-width: 15em;
-        transition: transform 0.5s, box-shadow 0.5s;
+        transition: max-width 0.25s;
         cursor: pointer;
 
         animation: spinning 1s ease-in-out alternate infinite;
     }
 
     img:hover {
-        transform: scale(110%) rotate(2deg);
-        box-shadow: 5px 5px 10px rgba(0,0,0, 0.33);
+        max-width: 16.5em;
     }
 
     @keyframes spinning {

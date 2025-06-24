@@ -13,33 +13,69 @@ License, or (at your option) any later version.
 Main container for the quiz game.
 -->
 <script lang="ts">
-    import QuizStore from "../../../stores/quiz.js";
-    import {i18n}    from "../../../stores/i18n.js";
+    import QuizStore     from "../../../stores/quiz.js";
+    import {i18n}        from "../../../stores/i18n.js";
+    import AnswerCorrect from "./quiz-answer-correct.png";
+    import AnswerWrong   from "./quiz-answer-wrong.png";
+
+    let feedback: ""|"correct"|"wrong" = $state("");
+
+    function onAnswerClicked(event: MouseEvent, answer: number) {
+        event.preventDefault();
+        if (!$QuizStore.currentQuestion) return;
+
+        feedback = QuizStore.answer(answer) ? "correct" : "wrong";
+
+        window.setTimeout(() => {
+            QuizStore.goon();
+            feedback = "";
+        }, 3000);
+    }
 </script>
 
 <div id="container">
-    <div id="question">
-        <div class="number">
-            {$i18n.Quiz.QuestionNumber.replace("$1", $QuizStore.currentQuestion?.number?.toString() || "")}
+    {#if feedback === ""}
+        <div id="question">
+            <div class="number">
+                {$i18n.Quiz.QuestionNumber.replace("$1", $QuizStore.currentQuestion?.number?.toString() || "")}
+            </div>
+            <div class="text">
+                {$QuizStore.currentQuestion?.question || ""}
+            </div>
         </div>
-        <div class="text">
-            {$QuizStore.currentQuestion?.question || ""}
-        </div>
-    </div>
 
-    <ol id="answers">
-        {#each $QuizStore.currentQuestion?.answers || [] as answer, index}
-            <li
-                class:color1={index % 4 == 0}
-                class:color2={index % 4 == 1}
-                class:color3={index % 4 == 2}
-                class:color4={index % 4 == 3}
-            >
-                <span class="number">{index + 1}</span>
-                <span class="text">{answer}</span>
-            </li>
-        {/each}
-    </ol>
+        <ol id="answers">
+            {#each $QuizStore.currentQuestion?.answers || [] as answer, index}
+                <li>
+                <a
+                        href         = "#answer"
+                        class:color1 = {index % 4 == 0}
+                        class:color2 = {index % 4 == 1}
+                        class:color3 = {index % 4 == 2}
+                        class:color4 = {index % 4 == 3}
+                        onclick      = {event => onAnswerClicked(event, index)}
+                    >
+                        <span class="number">{index + 1}</span>
+                        <span class="text">{answer}</span>
+                    </a>
+                </li>
+            {/each}
+        </ol>
+    {:else if feedback === "correct"}
+        <div id="feedback" class="correct">
+            <img src={AnswerCorrect} alt="">
+            <div>
+                {$i18n.Quiz.FeedbackCorrect}
+            </div>
+        </div>
+    {:else if feedback === "wrong"}
+        <div id="feedback" class="wrong">
+            <img src={AnswerWrong} alt="">
+            <div>
+                {$i18n.Quiz.FeedbackWrong}
+            </div>
+        </div>
+    {/if}
 </div>
 
 <style>
@@ -87,9 +123,17 @@ Main container for the quiz game.
 
         li {
             margin: 0;
-            
-            box-sizing: border-box;
+            padding: 0;
             width: calc(50% - 1em);
+        }
+            
+        a {
+            display: block;
+            width: 100%;
+            height: 100%;
+            text-align: start;
+
+            box-sizing: border-box;
             padding: 0.5em;
             border-radius: 0.5rem;
 
@@ -154,6 +198,60 @@ Main container for the quiz game.
             &:hover {
                 transform: scale(105%) rotate(2.5deg);
             }
+        }
+    }
+
+    #feedback {
+        flex: 1;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2em;
+
+        font-weight: bold;
+        font-size: 150%;
+
+        img {
+            display: block;
+            width: 100%;
+            max-width: 10em;
+            animation: feedback-image 1.5s ease-in-out alternate infinite;
+        }
+
+        div {
+            text-align: center;
+            text-shadow: 1px 1px black;
+            animation: feedback-text 0.9s ease-in-out alternate infinite;
+        }
+        
+        &.correct {
+            color: hsl(40, 75%, 45%);
+        }
+
+        &.wrong {
+            color: hsl(0, 70%, 50%);
+        }
+    }
+
+    @keyframes feedback-image {
+        0% {
+            transform: rotate3d(0,0,0, 0deg);
+        }
+
+        100% {
+            transform: rotate3d(0,1,0, 360deg);
+        }
+    }
+
+    @keyframes feedback-text {
+        0% {
+            transform: rotate(-3deg);
+        }
+
+        100% {
+            transform: rotate(4.5deg);
         }
     }
 

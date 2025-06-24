@@ -23,15 +23,18 @@ const i18n: I18N = {
 
     Chat: {
         MobileShowQuiz: "Zurück zum Quiz",
-        Placeholder: "Schreibe etwas …",
-        TooltipSend: "Nachricht abschicken",
-        Disclaimer: "KI kann eigenartige Fehler machen. Sei gewarnt. 🥸",
-        Waiting: "Warte …",
+        Placeholder:    "Schreibe etwas …",
+        TooltipSend:    "Nachricht abschicken",
+        Disclaimer:     "KI kann eigenartige Fehler machen. Sei gewarnt. 🥸",
+        Waiting:        "Warte …",
     },
 
     Quiz: {
-        MobileShowChat: "Zeige Chat",
-        QuestionNumber: "Frage $1:",
+        MobileShowChat:      "Zeige Chat",
+        QuestionNumber:      "Frage $1:",
+        FeedbackCorrect:     "Das ist richtig!",
+        FeedbackWrong:       "Leider falsch …",
+        PromptFinalFeedback: "Dies sind meine Antwort. Bitte gib mir Feedback und erkläre es mir, wenn ich etwas falsch beantwortet habe:",
     },
 
     WebsocketError: {

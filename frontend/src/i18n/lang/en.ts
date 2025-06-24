@@ -22,15 +22,18 @@ export default {
 
     Chat: {
         MobileShowQuiz: "Return to Quiz",
-        Placeholder: "Type something …",
-        TooltipSend: "Send Message",
-        Disclaimer: "AI can make silly mistakes. You have been warned. 🥸",
-        Waiting: "Waiting …",
+        Placeholder:    "Type something …",
+        TooltipSend:    "Send Message",
+        Disclaimer:     "AI can make silly mistakes. You have been warned. 🥸",
+        Waiting:        "Waiting …",
     },
 
     Quiz: {
-        MobileShowChat: "Show Chat",
-        QuestionNumber: "Question $1:",
+        MobileShowChat:      "Show Chat",
+        QuestionNumber:      "Question $1:",
+        FeedbackCorrect:     "That is correct!",
+        FeedbackWrong:       "Sadly wrong …",
+        PromptFinalFeedback: "These are my answers. Please give me feedback and explain to me, if I answered something wrong:",
     },
 
     WebsocketError: {
