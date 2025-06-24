@@ -21,16 +21,28 @@ A single chat message.
 
     interface Props {
         message: ChatMessage;
+        parent:  HTMLDivElement;
     }
 
-    let {message = {}}: Props = $props();
+    let {message = {}, parent}: Props = $props();
 
     let avatar = $state(AvatarAgent);
     if (message.role === "user")  avatar = AvatarUser;
     if (message.role === "error") avatar = AvatarError;
 
     let md = markdownit();
-    let messageText = $derived(md.render(message.text || ""));
+    
+    let messageText = $derived.by(() => {
+        if (typeof message.text === "string") {
+            return md.render(message.text || "");
+        }
+    });
+
+    $effect.pre(() => {
+        window.setTimeout(() => {
+            parent.scrollTop = parent.scrollHeight;
+        }, 500);
+    });
 </script>
 
 <div id="container" class={message.role}>

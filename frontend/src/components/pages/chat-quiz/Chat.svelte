@@ -24,6 +24,7 @@ Main container for the chat conversation.
         chat.connect();
     }
 
+    let messagesDiv: HTMLDivElement|undefined = $state();
     let inputInnerDiv: HTMLDivElement;
     let readyToSend = $state(false);
 
@@ -56,9 +57,9 @@ Main container for the chat conversation.
 
 <div id="container">
     <!-- Chat messages -->
-    <div id="messages">
+    <div id="messages" bind:this={messagesDiv}>
         {#each $chat as chatMessage}
-            <ChatMessage message={chatMessage}/>
+            <ChatMessage message={chatMessage} parent={messagesDiv}/>
         {/each}
     </div>
 
@@ -162,6 +163,7 @@ Main container for the chat conversation.
             width: 3em;
             height: 3em;
             border-radius: 100%;
+            flex-shrink: 0;
 
             border: none;
             background: lightgrey;

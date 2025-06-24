@@ -139,10 +139,10 @@ class ChatAgent:
                 if "```json" in reply_text:
                     json_found = True
                     json_blocks.append("")
-                    splitted = chunk.split("```json", maxsplit=1)
+                    splitted = reply_text.split("```json", maxsplit=1)
 
                     if len(splitted) == 1:
-                        reply_text = splitted
+                        reply_text = splitted[0]
                     else:
                         reply_text, remaining_chunk = splitted
                         consume_chunk(remaining_chunk)
@@ -151,10 +151,10 @@ class ChatAgent:
 
                 if "```" in json_blocks[-1]:
                     json_found = False
-                    splitted = chunk.split("```", maxsplit=1)
+                    splitted = json_blocks[-1].split("```", maxsplit=1)
 
                     if len(splitted) == 1:
-                        json_blocks[-1] = splitted
+                        json_blocks[-1] = splitted[0]
                     else:    
                         json_blocks[-1], remaining_chunk = splitted
                         consume_chunk(remaining_chunk)
