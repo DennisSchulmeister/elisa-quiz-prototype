@@ -1,0 +1,16 @@
+{$DOMAIN:localhost} {
+    encode gzip
+    
+    file_server
+    root * /srv
+    respond /api.url "{$BACKEND_URL}"
+
+    reverse_proxy /ws/* {$BACKEND_HOST:backend}:{$BACKEND_PORT:8000}
+
+    basic_auth {
+        # Username "elisa", password "elisa"
+        # See: https://caddyserver.com/docs/caddyfile/directives/basic_auth
+        # Use "caddy hash-password" to create the password hash
+		elisa $2a$14$39ezPLC8X9ODipWKGrVY/OEcNVULLLudQuUtEWxFNQUnaGyXZFNhK
+    }
+}

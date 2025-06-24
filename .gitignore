@@ -3,6 +3,9 @@
 __pycache__
 *.pyc
 
+# Docker Compose
+docker-compose.yml
+
 # Logs
 logs
 *.log

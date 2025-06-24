@@ -3,8 +3,11 @@ Elisa: Learning Quizzes
 
 1. [Description](#deployment)
 1. [More Information](#more-information)
-1. [Deployment](#deployment)
-1. [Configuration](#configuration)
+1. [Deployment Overview](#deployment-overview)
+1. [Manual Build and Deployment](#manual-build-and-deployment)
+1. [Pre-Built Distribution Package](#pre-built-distribution-package)
+1. [Configuration Options](#configuration-options)
+1. [Deployment with Docker](#deployment-with-docker)
 1. [Copyright](#copyright)
 
 Description
@@ -32,8 +35,8 @@ documents provide some technical information.
  * [Developer Notes](./HACKING.md)
  * [Code of Conduct](./CODE_OF_CONDUCT.md)
 
-Deployment
-==========
+Deployment Overview
+===================
 
 **IMPORTANT:** Currently there is no user authentication whatsoever. If you plan to deploy
 on a public server, you need to use the possibilities of your web server to restrict access,
@@ -47,6 +50,7 @@ This project consists of two parts:
 **Prerequisites:**
 
 1. API access to a Language Model (self-hosted or commercial subscription)
+   See [LangChain documentation](https://python.langchain.com/api_reference/langchain/chat_models/langchain.chat_models.base.init_chat_model.html)
 1. A (sub)domain and webserver host under your control.
 
 Deployment usually means to start the backend server (by default using [Uvicorn](https://www.uvicorn.org/))
@@ -63,10 +67,17 @@ and super easy to setup (including automatic SSL certificate management!).
 1. Setup frontend web server
 1. Done!
 
-Or use the provided Docker Compose setup for a plug-and-play solution. The following shell commands
-show a manual setup on a typical Linux box (here Debian or Ubuntu). Please note, that you need to
-have an API key for [OpenAI](https://platform.openai.com/) or any other
-[LLM supported by LangChain](https://python.langchain.com/api_reference/langchain/chat_models/langchain.chat_models.base.init_chat_model.html)
+The next sections explain three different deployment approaches:
+
+1. Manually building the source
+1. Pre-built distribution package
+1. Docker and Docker Compose
+
+Manual Build and Deployment
+===========================
+
+The following shell commands show a manual setup on a typical Linux box (here Debian or Ubuntu),
+building and running the latest greatest version from source.
 
 ```sh
 # Install python runtime and poetry package manager (needed to run the backend)
@@ -101,6 +112,7 @@ sudo nano .env
 # Create and start SystemD service
 cd ..
 sudo cp elisa-quiz.service /etc/systemd/system
+sudo systemctl daemon-reload
 sudo systemctl enable elisa-quiz
 sudo systemctl start elisa-quiz
 
@@ -120,10 +132,6 @@ sudo nano /etc/caddy/Caddyfile
 sudo systemctl reload caddy
 sudo systemctl status caddy
 sudo journalctl -fu caddy
-
-# Create file that tells the frontend the backend URL
-cd frontend/static/_bundle
-sudo nano api.url
 ```
 
 Example Caddy configuration, assuming the backend server listens on `localhost:8000`.
@@ -131,8 +139,11 @@ Example Caddy configuration, assuming the backend server listens on `localhost:8
 ```
 your-domain.com {
     encode gzip
+
     file_server
     root * /opt/elisa-quiz/frontend/static/_bundle
+    respond /api.url "https://your-domain.com"
+
     reverse_proxy /ws/* localhost:8000
 
     basic_auth {
@@ -151,14 +162,13 @@ for almost twenty yours on countless machines) – beat this!
 If you need to start the backend server on another network address, edit the SystemD service
 file and pass `--host <ip-address>` and/or `--port <port-number>` arguments to `main.py`.
 
-Example `api.url` file (just one line with the backend URL, downloadable by the frontend):
+Pre-Built Distribution Package
+==============================
 
-```
-https://your-domain.com
-```
+TODO
 
-Configuration
-=============
+Configuration Options
+=====================
 
 The backend start-up file `main.py` accepts the following command line arguments:
 
@@ -176,6 +186,32 @@ the command line arguments:
 * `LLM_MODEL_PROVIDER`: Technical name of the language model provider (if it cannot be infered from the model name)
 * `LLM_BASE_URL`: Non-standard base URL for the language model API (if not the official one)
 * `OPENAI_API_KEY`: API key for the language model (the name of the variable actually depends on the chosen language model)
+
+Deployment with Docker
+======================
+
+The docker files in the [frontend](./frontend) and [backend](./backend) directories
+should be generic enough to be directly used. Except that the frontend container
+has hard-coded BASIC authentication (in the `Caddyfile`) with username and password
+`elisa` as in the manual deployment examples.
+
+But the docker compose template using these containers must be adapter local environment.
+Hence the `.template` suffix. Things you might want to adapt:
+
+* If there is already a web-server running on the host, you don't need to run another
+  one inside Docker. Just download the pre-built distribution package and directly
+  serve the SPA as described above.
+
+* When running the frontend in Docker, you need to set a few environment variables:
+
+   - `DOMAIN`: Public domain under which to serve the application
+   - `BACKEND_URL`: URL with which the frontend connects to the backend
+   - `BACKEND_HOST`: (optional): Internal host name of the backend (default: backend)
+   - `BACKEND_PORT`: (optional): Internal port number of the backend (default: 8000)
+
+Just copy [docker-compose.yml.template](docker-compose.yml.template) to `docker-compose.yml`
+and make your changes. Just like `.env` this file is excluded from git. Then start with
+the usual `docker compose up -d` command.
 
 Copyright
 =========
