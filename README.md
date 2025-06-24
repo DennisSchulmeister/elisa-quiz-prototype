@@ -4,6 +4,7 @@ Elisa: Learning Quizzes
 1. [Description](#deployment)
 1. [More Information](#more-information)
 1. [Deployment](#deployment)
+1. [Configuration](#configuration)
 1. [Copyright](#copyright)
 
 Description
@@ -42,6 +43,11 @@ This project consists of two parts:
 
 * **Backend:** A simple python application built with [FastAPI](https://fastapi.tiangolo.com/).
 * **Frontend:** A static Single Page App built with [Svelte](https://svelte.dev/)
+
+**Prerequisites:**
+
+1. API access to a Language Model (self-hosted or commercial subscription)
+1. A (sub)domain and webserver host under your control.
 
 Deployment usually means to start the backend server (by default using [Uvicorn](https://www.uvicorn.org/))
 on a localhost network address (non-public) and configuring a web server to host the frontend
@@ -114,6 +120,10 @@ sudo nano /etc/caddy/Caddyfile
 sudo systemctl reload caddy
 sudo systemctl status caddy
 sudo journalctl -fu caddy
+
+# Create file that tells the frontend the backend URL
+cd frontend/static/_bundle
+sudo nano api.url
 ```
 
 Example Caddy configuration, assuming the backend server listens on `localhost:8000`.
@@ -140,6 +150,32 @@ for almost twenty yours on countless machines) – beat this!
 
 If you need to start the backend server on another network address, edit the SystemD service
 file and pass `--host <ip-address>` and/or `--port <port-number>` arguments to `main.py`.
+
+Example `api.url` file (just one line with the backend URL, downloadable by the frontend):
+
+```
+https://your-domain.com
+```
+
+Configuration
+=============
+
+The backend start-up file `main.py` accepts the following command line arguments:
+
+* `--host`, `-h`: Host IP address of the network interface to bind to
+* `--port`, `-p`: Port number to listen on
+* `--reload`: Restart server when the python code has changed (meant for development, only)
+
+Additionally it reads the following environment variables, some of which being overridden by
+the command line arguments:
+
+* `UVICORN_HOST`: Host IP address (same as `--host` argument)
+* `UVICORN_PORT`: Port number (same as `--port` argument)
+* `UVICORN_RELOAD`: Live-reloading (same as `--reload` argument)
+* `LLM_CHAT_MODEL`: Technical name of the used language model (according to LangChain documentation)
+* `LLM_MODEL_PROVIDER`: Technical name of the language model provider (if it cannot be infered from the model name)
+* `LLM_BASE_URL`: Non-standard base URL for the language model API (if not the official one)
+* `OPENAI_API_KEY`: API key for the language model (the name of the variable actually depends on the chosen language model)
 
 Copyright
 =========
