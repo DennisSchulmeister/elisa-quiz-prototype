@@ -5,8 +5,11 @@ requirements.txt
 __pycache__
 *.pyc
 
-build
+# Actually do include dist/elisa-quiz.zip!
 dist
+!dist/elisa-quiz.zip
+
+build
 _bundle.*
 _bundle
 

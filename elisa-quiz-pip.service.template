@@ -1,0 +1,22 @@
+# On Linux copy this file to /etc/systemd/system and change the values below.
+# Afterwards use the following shell commands to automatically start the server:
+#
+# sudo systemctl daemon-reload
+# sudo systemctl enable elisa-quiz.service
+# sudo systemctl start elisa-quiz.service
+#
+# Version using plain pip and python.
+
+[Unit]
+Description=Elisa Quiz (Backend)
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/elisa-quiz/backend
+ExecStart=.venv/bin/python3 main.py
+Restart=on-failure
+RestartSec=5
+User=your-username
+
+[Install]
+WantedBy=multi-user.target

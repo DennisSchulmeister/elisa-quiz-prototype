@@ -4,6 +4,8 @@
 # sudo systemctl daemon-reload
 # sudo systemctl enable elisa-quiz.service
 # sudo systemctl start elisa-quiz.service
+#
+# Version using the poetry package manager for python.
 
 [Unit]
 Description=Elisa Quiz (Backend)

@@ -111,7 +111,7 @@ sudo nano .env
 
 # Create and start SystemD service
 cd ..
-sudo cp elisa-quiz.service /etc/systemd/system
+sudo cp elisa-quiz-poetry.service.template /etc/systemd/system/elisa-quiz.service
 sudo systemctl daemon-reload
 sudo systemctl enable elisa-quiz
 sudo systemctl start elisa-quiz
@@ -167,7 +167,59 @@ file and pass `--host <ip-address>` and/or `--port <port-number>` arguments to `
 Pre-Built Distribution Package
 ==============================
 
-TODO
+This repository contains the pre-built distribution package [dist/elisa-quiz.zip](./dist/elisa-quiz.zip),
+which will be updated from time to time (using the command `npm run dist`). This saves you
+from installing [Node.js](https://nodejs.org/) and [Poetry](https://python-poetry.org/),
+so that you can directly setup the backend service and web server:
+
+```sh
+# Install python runtime and pip package manager (needed to run the backend)
+sudo apt install python3 python3-pip
+
+# Download source code
+# NOTE: When not installing to /opt/elisa-quiz please adopt paths in elisa-quiz.service
+cd /opt
+sudo mkdir elisa-quiz
+cd elisa-quiz
+sudo wget https://raw.githubusercontent.com/DennisSchulmeister/elisa-quiz/refs/heads/main/dist/elisa-quiz.zip
+sudo unzip elisa-quiz.zip
+
+# Create python environment and install python dependencies
+cd backend
+sudo python -m venv .venv
+. .venv/bin/activate
+sudo pip install -r requirements.txt
+
+# Create .env file with OpenAI API key (or others supported by LangChain)
+sudo cp .env.template .env
+sudo nano .env
+
+# Create and start SystemD service
+cd ..
+sudo cp elisa-quiz-pip.service.template /etc/systemd/system/elisa-quiz.service
+sudo systemctl daemon-reload
+sudo systemctl enable elisa-quiz
+sudo systemctl start elisa-quiz
+
+# Check if the backend server has successfully started
+sudo systemctl status elisa-quiz
+sudo journalctl -fu elisa-quiz
+
+# Install, enable and start webserver
+sudo apt install caddy
+sudo systemctl enable caddy
+sudo systemctl start caddy
+
+# Edit web server configuration (see example below)
+sudo nano /etc/caddy/Caddyfile
+
+# Reload web server configuration and test for errors
+sudo systemctl reload caddy
+sudo systemctl status caddy
+sudo journalctl -fu caddy
+```
+
+The Caddy configuration remains the same as in the previous section.
 
 Configuration Options
 =====================
