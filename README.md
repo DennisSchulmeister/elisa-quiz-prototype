@@ -164,6 +164,46 @@ for almost twenty yours on countless machines) – beat this!
 If you need to start the backend server on another network address, edit the SystemD service
 file and pass `--host <ip-address>` and/or `--port <port-number>` arguments to `main.py`.
 
+If the public backend URL will have different host than the frontend URL, you need to handle
+the CORS preflight. Here is a short example:
+
+```
+# https://gist.github.com/vanodevium/563c7a3b1db7d5361f64388e62f9d08f
+(cors) {
+	@cors_preflight method OPTIONS
+
+	header {
+		Access-Control-Allow-Origin "{header.origin}"
+		Vary Origin
+		Access-Control-Expose-Headers "Authorization"
+		Access-Control-Allow-Credentials "true"
+	}
+
+	handle @cors_preflight {
+		header {
+			Access-Control-Allow-Headers "*"
+			Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE"
+			Access-Control-Max-Age "3600"
+		}
+		respond "" 204
+	}
+}
+
+# Frontend
+your-domain.com {
+    encode gzip
+    file_server
+    root * /opt/elisa-quiz/frontend/static
+    respond /api.url "https://api.your-domain.com"
+}
+
+# Backend
+api.your-domain.com {
+    import cors {header.origin}
+    reverse_proxy /ws/* localhost:8000
+}
+```
+
 Pre-Built Distribution Package
 ==============================
 
