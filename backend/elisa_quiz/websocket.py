@@ -8,9 +8,10 @@
 
 import json, traceback, typing
 
-from fastapi import WebSocket
-from fastapi import WebSocketDisconnect
-from .llm    import ChatAgent
+from asyncio.exceptions import CancelledError
+from fastapi            import WebSocket
+from fastapi            import WebSocketDisconnect
+from .llm               import ChatAgent
 
 class _WebsocketMessage(typing.TypedDict):
     """
@@ -47,27 +48,30 @@ class ChatWebSocketHandler:
         """
         await self.websocket.accept()
 
-        try:
-            while True:
-                try:
-                    message = json.loads(await self.websocket.receive_text())
+        while True:
+            try:
+                message = json.loads(await self.websocket.receive_text())
 
-                    if not isinstance(message, dict) or "code" not in message:
-                        raise ValueError("Invalid message format")
-                    
-                    handler = f"handle_{message["code"]}"
+                if not isinstance(message, dict) or "code" not in message:
+                    raise ValueError("Invalid message format")
+                
+                handler = f"handle_{message["code"]}"
 
-                    if hasattr(self, handler):
-                        func = getattr(self, handler)
-                        await func(message)
-                    else:
-                        await self.send_error(f"Unknown message code: {message["code"]}")
-                except Exception as e:
-                    traceback.print_exc()
-                    print(flush=True)
-                    await self.send_error(str(e))
-        except WebSocketDisconnect:
-            print("Client disconnected", flush=True)
+                if hasattr(self, handler):
+                    func = getattr(self, handler)
+                    await func(message)
+                else:
+                    await self.send_error(f"Unknown message code: {message["code"]}")
+            except (CancelledError, KeyboardInterrupt):
+                print("Shutdown server", flush=True)
+                break
+            except (WebSocketDisconnect, RuntimeError):
+                print("Client disconnected", flush=True)
+                break
+            except Exception as e:
+                traceback.print_exc()
+                print(flush=True)
+                await self.send_error(str(e))
 
     async def send_message(self, code: str, data: dict = {}):
         """

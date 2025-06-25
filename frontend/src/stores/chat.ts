@@ -68,8 +68,8 @@ export class ChatStore {
             const wsUrl = (await response.text()).trim() + "/ws/chat";
 
             this.socket = new WebSocket(wsUrl);
-            this.socket.addEventListener("message", this.handleMessage);
-            this.socket.addEventListener("error", this.handleError);
+            this.socket.addEventListener("message", this.handleMessage.bind(this));
+            this.socket.addEventListener("error", this.handleError.bind(this));
 
             // Send initial message to trigger greeting from LLM
             this.socket.addEventListener("open", () => {

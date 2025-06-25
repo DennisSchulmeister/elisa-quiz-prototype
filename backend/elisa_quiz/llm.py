@@ -120,7 +120,7 @@ class ChatAgent:
             "language": state.get("language"),
         })
 
-        response = self.chat_model.invoke(prompt)
+        response = await self.chat_model.ainvoke(prompt)
         return {"summary": response.content, "buffer": []}
 
     async def invoke_with_new_user_message(self, text: str, language: str, callback: SendMessageCallback) -> None:
