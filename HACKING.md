@@ -10,6 +10,7 @@ document tries to summarize a few things.
 1. [Technology Choices](#technology-choices)
 1. [Poetry Package Management](#poetry-package-management)
 1. [NPM and esbuild](#npm-and-esbuild)
+1. [Building the Distribution Package](#building-the-distribution-package)
 
 Quick Start
 -----------
@@ -109,3 +110,10 @@ allows you to run the following commands from within the `frontend` directory.
 * `npm run check` - Run all checks and tests: eslint, TypeScript, unit tests
 * `npm run start` or `npm start` - Run from built distribution files
 * `npm run tsc` - Check source code with TypeScript only
+
+Building the Distribution Package
+---------------------------------
+
+Simply run `npm run dist` from the root directory. This should rebuild everything and create
+a new file in the `dist/` directory. This requires the `git` and `zip` command on your machine,
+hence it is not 100% cross-platform compatible.
