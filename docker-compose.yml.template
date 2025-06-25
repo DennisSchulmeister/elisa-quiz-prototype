@@ -56,8 +56,12 @@ services:
       # Unless of course, you run the web server externally.
       #- "8000:8000"
     environment:
-      UVICORN_HOST: 0.0.0.0
-      # Usually these don't need to be changed. Below are the default values.
+      # Insert your API key here!
+      UVICORN_HOST:       0.0.0.0
+      LLM_CHAT_MODEL:     chatgpt-4o-latest
+      LLM_MODEL_PROVIDER: openai
+      OPENAI_API_KEY:     sk-...
+      # Usually the below values don't need to be changed.
       #UVICORN_PORT:   8000
       #UVICORN_RELOAD: false
 
