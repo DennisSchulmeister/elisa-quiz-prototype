@@ -207,9 +207,9 @@ api.your-domain.com {
 Pre-Built Distribution Package
 ==============================
 
-This repository contains the pre-built distribution package [dist/elisa-quiz.zip](./dist/elisa-quiz.zip),
-which will be updated from time to time (using the command `npm run dist`). This saves you
-from installing [Node.js](https://nodejs.org/) and [Poetry](https://python-poetry.org/),
+Download the pre-build distribution package from https://wpvs.de/repo/elisa-quiz.
+
+This saves you from installing [Node.js](https://nodejs.org/) and [Poetry](https://python-poetry.org/),
 so that you can directly setup the backend service and web server:
 
 ```sh

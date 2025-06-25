@@ -117,3 +117,5 @@ Building the Distribution Package
 Simply run `npm run dist` from the root directory. This should rebuild everything and create
 a new file in the `dist/` directory. This requires the `git` and `zip` command on your machine,
 hence it is not 100% cross-platform compatible.
+
+For the time being this file is then manually renamed and copied to https://wpvs.de/repo/elisa-quiz.
