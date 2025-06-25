@@ -21,12 +21,23 @@ Main page with the chat conversation and the quiz game.
     import {pageTitle}    from "../../../stores/page.js";
     import {pageSubTitle} from "../../../stores/page.js";
 
+    // Set page title
     $effect.pre(() => {
         $pageTitle    = $QuizStore.subject;
         $pageSubTitle = $QuizStore.level;
-    })
-    
-    let mobileShowChat = $state(true);
+    });
+
+    // Detect screen size: On large screen chat and quiz are always visible
+    // together. On small screens the user must switch.
+    let mediaQuery = window.matchMedia("(min-width: 1100px");
+    let largeScreen = $state(mediaQuery.matches);
+
+    mediaQuery.addEventListener("change", event => {
+        largeScreen = event.matches;
+    });
+
+    // Toggle mobile view between chat and quiz
+    let mobileShowChat = $state(false);
 
     function toggleMobileView(event: MouseEvent) {
         mobileShowChat = !mobileShowChat;
@@ -35,8 +46,8 @@ Main page with the chat conversation and the quiz game.
 </script>
 
 <div id="main_area">
-    {#if $QuizStore.running}
-        <section class="quiz {mobileShowChat ? 'mobileHidden' : ''}">
+    {#if $QuizStore.running && !mobileShowChat}
+        <section class="quiz">
             <a href="#dummy" class="toggle_view" onclick={toggleMobileView}>
                 {$i18n.Quiz.MobileShowChat}
             </a>
@@ -45,7 +56,8 @@ Main page with the chat conversation and the quiz game.
         </section>
     {/if}
 
-    <section class="chat {mobileShowChat ? '' : 'mobileHidden'}">
+    {#if !$QuizStore.running || mobileShowChat || largeScreen}
+    <section class="chat">
         {#if $QuizStore.running}
             <a href="#dummy" class="toggle_view" onclick={toggleMobileView}>
                 {$i18n.Chat.MobileShowQuiz}
@@ -54,6 +66,7 @@ Main page with the chat conversation and the quiz game.
 
         <Chat/>
     </section>
+    {/if}
 </div>
 <div>
     <a href="#/">{$i18n.AppShell.ChooseLanguage}</a>
@@ -88,12 +101,6 @@ Main page with the chat conversation and the quiz game.
 
     a {
         font-size: 90%;
-    }
-
-    @media all and (width < 700px) {
-        .mobileHidden {
-            display: none;
-        }
     }
 
     @media all and (width >= 700px) {

@@ -13,8 +13,9 @@ License, or (at your option) any later version.
 Simple 404 not found page
  -->
 <script lang="ts">
+    import NotFound   from "./page-not-found.png";
     import {i18n, _}  from "../../../stores/i18n.js";
-    import {location} from 'svelte-spa-router'
+    import {location} from "svelte-spa-router";
 </script>
 
 <div>
@@ -25,7 +26,7 @@ Simple 404 not found page
     <p>
         {@html $i18n.Error404.Message2}
     </p>
-    <img src="page-not-found.png" alt="">
+    <img src={NotFound} alt="">
 </div>
 
 <style>

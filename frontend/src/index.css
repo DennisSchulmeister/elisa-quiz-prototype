@@ -50,7 +50,7 @@ html, body {
 
 html {
     font-family: "normaltext";
-    font-size: 13pt;
+    font-size: max(1.8vmin, 11pt);
 }
 
 body {

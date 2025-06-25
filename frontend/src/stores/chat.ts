@@ -60,6 +60,13 @@ export class ChatStore {
     connected = false;
 
     /**
+     * Dummy method to prevent "variable declared but never used" when we first
+     * import the chat store to connect with the backend as early as possible.
+     */
+    noop() {
+    }
+
+    /**
      * Establish the WebSocket connection using the URL fetched from the backend.
      */
     async connect() {

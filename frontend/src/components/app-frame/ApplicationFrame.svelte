@@ -17,6 +17,10 @@ to display the actual content based on the current URL.
     import Router            from 'svelte-spa-router'
     import ApplicationHeader from './ApplicationHeader.svelte';
     import routes            from "../routes.js";
+    import {chat}            from "../../stores/chat.js";
+
+    // Connect with backend as early as possible
+    chat.noop();
 </script>
 
 

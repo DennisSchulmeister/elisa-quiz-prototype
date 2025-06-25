@@ -21,7 +21,7 @@ export default {
     },
 
     Chat: {
-        MobileShowQuiz: "Return to Quiz",
+        MobileShowQuiz: "Show Quiz",
         Placeholder:    "Type something …",
         TooltipSend:    "Send Message",
         Disclaimer:     "AI can make silly mistakes. You have been warned. 🥸",
