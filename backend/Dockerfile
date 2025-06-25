@@ -27,8 +27,8 @@ ENV MSGPACK_PUREPYTHON 1
 WORKDIR /app
 
 COPY --from=build /app/requirements.txt . 
-RUN python -m venv .env
-RUN .env/bin/pip install -r requirements.txt
+RUN python -m venv .venv
+RUN .venv/bin/pip install -r requirements.txt
 
 COPY . .
-CMD ["python", "./app/main.py"]
+CMD [".venv/bin/python", "main.py"]

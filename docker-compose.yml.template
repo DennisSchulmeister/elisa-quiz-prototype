@@ -17,10 +17,15 @@ services:
       # DOMAIN            = Public domain of the single page app
       # BACKEND_URL       = Public URL of the backend service (usually the same as DOMAIN)
       # BACKEND_HOST/PORT = Internal backend address
-      DOMAIN:        lernspiel.online
-      BACKEND_URL:   https://lernspiel.online
-      BACKEND_HOST:  backend
-      BACKEND_PORT0: 8000
+      DOMAIN:       lernspiel.online
+      BACKEND_URL:  https://lernspiel.online
+      BACKEND_HOST: backend
+      BACKEND_PORT: 8000
+
+      # If you are running this on a development machine: Make sure to add a port mapping
+      # like "8888:80" for the frontend container:
+      #DOMAIN:        http://:80
+      #BACKEND_URL:   http://localhost:8000
     ports:
       # Serving port 443 enables automatic TLS certificate management.
       # UDP port 443 is for HTTP/3. The others for HTTP/1 and 2.
@@ -45,14 +50,14 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
-    ports:
+    #ports:
       # Note that this container don't needs port-forwarding as it will only
       # be called via the Docker internal network by the frontend server.
       # Unless of course, you run the web server externally.
       #- "8000:8000"
     environment:
+      UVICORN_HOST: 0.0.0.0
       # Usually these don't need to be changed. Below are the default values.
-      #UVICORN_HOST:   localhost
       #UVICORN_PORT:   8000
       #UVICORN_RELOAD: false
 

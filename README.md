@@ -304,8 +304,19 @@ Hence the `.template` suffix. Things you might want to adapt:
    - `BACKEND_PORT`: (optional): Internal port number of the backend (default: 8000)
 
 Just copy [docker-compose.yml.template](docker-compose.yml.template) to `docker-compose.yml`
-and make your changes. Just like `.env` this file is excluded from git. Then start with
-the usual `docker compose up -d` command.
+and make your changes. Just like `.env` this file is excluded from git. Then start as usual:
+
+```sh
+docker compose build
+docker compose up -d
+```
+
+To inspect the running containers:
+
+```sh
+docker exec -it elisa-quiz-frontend-1 /bin/sh
+docker exec -it elisa-quiz-backend-1 /bin/sh
+```
 
 Copyright
 =========
