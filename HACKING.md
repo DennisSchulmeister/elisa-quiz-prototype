@@ -114,7 +114,10 @@ allows you to run the following commands from within the `frontend` directory.
 Building the Distribution Package
 ---------------------------------
 
-Simply run `npm run dist` from the root directory. This should rebuild everything and create
+First, commit and push all developments, because the build process will package the latest
+HEAD from git – not the latest local changes!
+
+Then run `npm run dist` from the root directory. This should rebuild everything and create
 a new file in the `dist/` directory. This requires the `git` and `zip` command on your machine,
 hence it is not 100% cross-platform compatible.
 
