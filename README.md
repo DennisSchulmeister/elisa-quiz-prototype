@@ -23,8 +23,8 @@ freedom and not in beer. 🍺
 
 Right now it is an prototype and experiment that I did with students to build AI
 learning tools. Actually it is not very fancy. But hopefully it is still useful and
-given enough community interest many features could be added. Let's get in touch to
-share ideas and get the stone rolling.
+given enough community interest many features could be added. See [backlog](./BACKLOG.md).
+Let's get in touch to share ideas and get the stone rolling.
 
 More Information
 ================
@@ -32,8 +32,9 @@ More Information
 Everyone is gladly invited to build upon this, share it and enhance it. The following
 documents provide some technical information.
 
- * [Developer Notes](./HACKING.md)
  * [Code of Conduct](./CODE_OF_CONDUCT.md)
+ * [Developer Notes](./HACKING.md)
+ * [Backlog and Ideas](./BACKLOG.md)
 
 Deployment Overview
 ===================
