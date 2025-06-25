@@ -6,7 +6,7 @@ __pycache__
 *.pyc
 
 # Actually do include dist/elisa-quiz.zip!
-dist
+dist/*
 !dist/elisa-quiz.zip
 
 build
