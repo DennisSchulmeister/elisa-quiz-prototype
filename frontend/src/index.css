@@ -1,5 +1,5 @@
 /*
- * Elisa: AI Learning Quiz
+ * Elisa: AI Learning Assistant
  * © 2025 Dennis Schulmeister-Zimolong <dennis@wpvs.de>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -7,6 +7,9 @@
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
  */
+
+/* Icons */
+@import url(fonts/fontello/css/fontello.css);
 
 /* Webfonts */
 @font-face {
@@ -79,4 +82,17 @@ h1 {
     color: rgb(53, 143, 212);
     text-shadow: 1px 1px 2px rgba(0,0,0, 0.5);
     font-weight: bold;
+}
+
+.ui-message {
+    font-size: 125%;
+    max-width: 40em;
+    text-align: justify;
+    hyphens: auto;
+}
+
+@media print {
+    .no-print {
+        display: none;
+    }
 }

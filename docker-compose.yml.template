@@ -61,9 +61,33 @@ services:
       LLM_CHAT_MODEL:     chatgpt-4o-latest
       LLM_MODEL_PROVIDER: openai
       OPENAI_API_KEY:     sk-...
+      MONGODB_URL:        mongodb://mongo:mongo@localhost:27071/?compressors=zstandard,zlib,snappy
       # Usually the below values don't need to be changed.
       #UVICORN_PORT:   8000
       #UVICORN_RELOAD: false
+    depends_on:
+      - mongodb
+
+  #============================================================================
+  # Mongo Database
+  #
+  # This is based on the official Mongo docker image.
+  # See: https://hub.docker.com/_/mongo
+  #============================================================================
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    environment:
+      # Change admin credentials!
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: secret
+    volumes:
+      - mongo_data:/data/mongo-data:/data/db
+      # Change normal database user credentials! The script only runs once when
+      # the mongo data directory is empty.
+      - ./backend/docker/mongo-users.js:/docker-entrypoint-initdb.d/mongo-users.js
 
 volumes:
   caddy_data:
+  mongo_data:

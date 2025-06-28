@@ -1,5 +1,5 @@
 /*
- * Elisa: AI Learning Quiz
+ * Elisa: AI Learning Assistant
  * © 2025 Dennis Schulmeister-Zimolong <dennis@wpvs.de>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,6 +14,15 @@ import { _, i18n, language } from "./i18n.js";
 import QuizStore             from "./quiz.js";
 
 /**
+ * Connection status to adapt the UI accordingly. Initially it will always be
+ * "disconnected" and the main UI will remain invisible. Once the connection
+ * becomes available it will be "connected". If the connection goes down after
+ * that it will be "connection-lost". We periodically try to (re)connect after
+ * a small waiting time while the connection is down.
+ */
+export type ConnectionStatus = "disconnected" | "connected" | "connection-lost";
+
+/**
  * Websocket message exchanged between frontend and backend. This is deliberately
  * kept simple. It simply contains a message code with additional data.
  */
@@ -23,11 +32,23 @@ interface WebSocketMessage {
 };
 
 /**
+ * Origin of the message
+ */
+export type MessageRole = "user" | "agent" | "error" | "status";
+
+/**
+ * Whether the message contains normal text content (speak) or intermediate
+ * reasoning steps (think)
+ */
+export type MessageType = "speak" | "think";
+
+/**
  A single chat message to be displayed in the UI.
  */
 export interface ChatMessage extends WebSocketMessage {
     id?:   string;
-    role?: "user" | "agent" | "error";
+    role?: MessageRole;
+    type?: MessageType;
     text?: string;
 };
 
@@ -55,9 +76,16 @@ export class ChatStore {
     private socket!: WebSocket;
 
     /**
-     * Flag that we are connected with the backend.
+     * Connection status
      */
-    connected = false;
+    connectionStatus: ConnectionStatus = "disconnected";
+
+    /**
+     * Constructor. Tries to reconstruct the previous chat messages.
+     */
+    constructor() {
+        this.restoreMessages();
+    }
 
     /**
      * Dummy method to prevent "variable declared but never used" when we first
@@ -68,9 +96,16 @@ export class ChatStore {
 
     /**
      * Establish the WebSocket connection using the URL fetched from the backend.
+     * @param reset - Reset history and start new session
      */
-    async connect() {
+    async connect(resetHistory: boolean = false) {
         try {
+            // Reset chat history
+            if (resetHistory) {
+                return this.store.update(messages => this.saveMessages([]));
+            }
+
+            // Establish connection
             const response = await fetch("/api.url");
             const wsUrl = (await response.text()).trim() + "/ws/chat";
 
@@ -80,14 +115,29 @@ export class ChatStore {
 
             // Send initial message to trigger greeting from LLM
             this.socket.addEventListener("open", () => {
-                this.connected = true;
+                this.connectionStatus = "connected";
                 this.send("chat_input", {text: "Hi!", language: language.value});
             });
 
-            this.socket.addEventListener("close", () => this.connected = false);
+            this.socket.addEventListener("close", () => {
+                // Show status message
+                console.error(i18n.value.Chat.ConnectionLost);
+                this.appendMessage("status", "speak", i18n.value.Chat.ConnectionLost);
+
+                // Try to reconnect
+                this.connectionStatus = "connection-lost";
+                window.setTimeout(this.connect, 5000);
+            });
         } catch (error) {
+            // Show error message
+            this.connectionStatus = "disconnected";
+
+            console.error(error);
             let errorMessage = error instanceof Error ? error.message : String(error);
-            this.appendError(i18n.value.WebsocketError.FetchURL + " " + errorMessage);
+            this.appendMessage("error", "speak", i18n.value.WebsocketError.FetchURL + " " + errorMessage);
+
+            // Try to reconnect
+            window.setTimeout(this.connect, 10000);
         }
     }
 
@@ -107,7 +157,7 @@ export class ChatStore {
         };
 
         if (!hidden) {
-            this.store.update((messages) => [...messages, chatMessage]);
+            this.store.update(messages => this.saveMessages([...messages, chatMessage]));
         }
         
         this.send("chat_input", {text: text, language: language.value});
@@ -126,7 +176,7 @@ export class ChatStore {
             const message = JSON.stringify({ code, ...data });
             this.socket.send(message);
         } else {
-            this.appendError(_(i18n.value.WebsocketError.NotConnected, {code}));
+            this.appendMessage("error", "speak", _(i18n.value.WebsocketError.NotConnected, {code}));
         }
     }
 
@@ -144,11 +194,11 @@ export class ChatStore {
             if (typeof func === "function") {
                 func.call(this, message);
             } else {
-                this.appendError(_(i18n.value.WebsocketError.UnknownMessageCode, {"code": message.code}));
+                this.appendMessage("error", "speak", _(i18n.value.WebsocketError.UnknownMessageCode, {"code": message.code}));
             }
         } catch (err) {
             console.error(err);
-            this.appendError(err instanceof Error ? err.message : String(err));
+            this.appendMessage("error", "speak", err instanceof Error ? err.message : String(err));
         }
     };
 
@@ -170,13 +220,13 @@ export class ChatStore {
             const index = messages.findIndex((m) => m.id === chatMessage.id);
 
             if (index !== -1) {
-                return [
+                return this.saveMessages([
                     ...messages.slice(0, index),
                     { ...messages[index], text: chatMessage.text },
                     ...messages.slice(index + 1),
-                ];
+                ]);
             } else {
-                return [...messages, chatMessage];
+                return this.saveMessages([...messages, chatMessage]);
             }
         });
     }
@@ -198,7 +248,7 @@ export class ChatStore {
      * @param inboundMessage - Received websocket message
      */
     private handle_error(inboundMessage: ErrorMessage) {
-        this.appendError(inboundMessage.text || i18n.value.WebsocketError.UnknownError);
+        this.appendMessage("error", "speak", inboundMessage.text || i18n.value.WebsocketError.UnknownError);
     }
 
     /**
@@ -207,22 +257,48 @@ export class ChatStore {
      */
     private handleError(error: Event): void {
         const errorText = (error instanceof Error && error.message) ? error.message : i18n.value.WebsocketError.UnknownError;
-        this.appendError(errorText);
+        this.appendMessage("error", "speak", errorText);
     }
 
     /**
-     * Append error message to the chat message store.
-     * @param text - Error text
+     * Append new message to the chat message store.
+     * 
+     * @param role - Message role
+     * @param type - Message type
+     * @param text - Message text
      */
-    private appendError(text: string) {
+    private appendMessage(role: MessageRole, type: MessageType, text: string) {
         const errorMessage: ChatMessage = {
-            code: "error",
+            code: "chat",
             id:   crypto.randomUUID(),
-            role: "error",
+            role: role,
+            type: type,
             text: text,
         };
 
-        this.store.update((messages) => [...messages, errorMessage]);
+        this.store.update(messages => this.saveMessages([...messages, errorMessage]));
+    }
+
+    /**
+     * Persist updated chat messages in the local storage, so that it can be restored
+     * after an accidental page reload.
+     * 
+     * @param messages Current chat messages
+     * @returns Saved messages
+     */
+    private saveMessages(messages: ChatMessage[]): ChatMessage[] {
+        localStorage.setItem("chatMessages", JSON.stringify(messages));
+        return messages;
+    }
+
+    /**
+     * Restore chat messages from local storage. This overwrites all previously
+     * contained messages in the store object!
+     */
+    private restoreMessages() {
+        this.store.update(_ => {
+            return JSON.parse(localStorage.getItem("chatMessages") || "[]");
+        });
     }
 }
 

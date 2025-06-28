@@ -1,5 +1,5 @@
 /*
- * Elisa: AI Learning Quiz
+ * Elisa: AI Learning Assistant
  * © 2025 Dennis Schulmeister-Zimolong <dennis@wpvs.de>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -8,12 +8,14 @@
  * License, or (at your option) any later version.
  */
 
-import LanguagePage from "./pages/language/LanguagePage.svelte";
-import ChatQuizPage from "./pages/chat-quiz/ChatQuizPage.svelte"
-import NotFoundPage from "./pages/errors/NotFoundPage.svelte";
+import LanguagePage     from "./pages/new/NewChatPage.svelte";
+import MainPage         from "./pages/main/MainPage.svelte"
+import ResetHistoryPage from "./pages/reset-history/ResetHistoryPage.svelte";
+import NotFoundPage     from "./pages/errors/NotFoundPage.svelte";
 
 export default {
-    "/":     LanguagePage,
-    "/main": ChatQuizPage,
-    "*":     NotFoundPage,
+    "/":              LanguagePage,
+    "/main":          MainPage,
+    "/reset-history": ResetHistoryPage,
+    "*":              NotFoundPage,
 };

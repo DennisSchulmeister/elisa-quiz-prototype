@@ -7,6 +7,8 @@
         "start": "conc -c auto npm:start:*",
         "start:backend": "cd backend && python3 main.py --reload",
         "start:frontend": "cd frontend && npm start",
+        "start:docker":   "docker compose -f docker-compose-dev.yml up",
+        "mongo:cli": "docker exec -it elisa-quiz-mongodb-1 mongosh -u admin -p secret",
         "dist": "npm run dist:frontend && npm run dist:backend && npm run dist:finish",
         "dist:frontend": "cd frontend && npm run build",
         "dist:backend": "cd backend && poetry export --format=requirements.txt --output=requirements.txt",

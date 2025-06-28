@@ -1,5 +1,5 @@
 /*
- * Elisa: AI Learning Quiz
+ * Elisa: AI Learning Assistant
  * © 2025 Dennis Schulmeister-Zimolong <dennis@wpvs.de>
  *
  * This program is free software: you can redistribute it and/or modify

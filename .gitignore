@@ -1,6 +1,7 @@
 .env
 docker-compose.yml
 requirements.txt
+volumes
 
 __pycache__
 *.pyc
