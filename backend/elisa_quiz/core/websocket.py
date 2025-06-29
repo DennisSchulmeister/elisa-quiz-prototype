@@ -11,6 +11,7 @@ import json, traceback, typing
 from asyncio.exceptions import CancelledError
 from fastapi            import WebSocket
 from fastapi            import WebSocketDisconnect
+from typeguard          import check_type
 
 from ..database.error   import ErrorDatabase
 
@@ -63,8 +64,7 @@ class ParentWebsocketHandler:
                 handled = False
                 message = json.loads(await self.websocket.receive_text())
 
-                if not isinstance(message, dict) or "code" not in message:
-                    raise ValueError("Invalid message format")
+                check_type(message, WebsocketMessage)
                 
                 for handler in self.handlers:
                     if message["code"] in handler._message_handlers:
@@ -89,6 +89,15 @@ class ParentWebsocketHandler:
 
                 await ErrorDatabase.save_backend_exception(e)
                 await self.send_error(str(e))
+            
+            for handler in self.handlers:
+                try:
+                    if hasattr(handler, "on_connection_closed"):
+                        await handler.on_connection_closed()
+                except Exception as e:
+                    traceback.print_exc()
+                    print(flush=True)
+                    await ErrorDatabase.save_backend_exception(e)
 
     async def send_message(self, code: str, data: typing.Mapping[str, typing.Any] = {}):
         """
@@ -101,3 +110,18 @@ class ParentWebsocketHandler:
         Send error message to the client.
         """
         await self.send_message("error", {"text": text})
+    
+    async def notify_handlers(self, key: str, value):
+        """
+        Send a notification to all handlers that have a `notify()` method. This is used
+        to decouple the handlers and still pass data like the updated privacy settings
+        once they were received.
+        """
+        for handler in self.handlers:
+            try:
+                if hasattr(handler, "notify"):
+                    await handler.notify(key, value)
+            except Exception as e:
+                traceback.print_exc()
+                print(flush=True)
+                await ErrorDatabase.save_backend_exception(e)

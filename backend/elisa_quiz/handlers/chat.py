@@ -6,6 +6,8 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
+from typeguard          import check_type
+
 from ..agents.prototype import ActivityData
 from ..agents.prototype import ChatMessage
 from ..agents.prototype import PrototypeAgent
@@ -20,6 +22,9 @@ class ChatInputMessage(WebsocketMessage):
     """
     text: str
 
+# TODO: Start conversation message to start a new thread to receive message history from client
+# TODO: End activity message to trigger LLM-created feedback
+
 @websocket_handler
 class ChatHandler:
     """
@@ -32,11 +37,21 @@ class ChatHandler:
         self.parent     = parent
         self.chat_agent = PrototypeAgent()
     
+    def notify(self, key: str, value):
+        """
+        Receive notification from analytics handler, whether the user allows to
+        track the learning topics.
+        """
+        if key == "record_learning_topics":
+            self.chat_agent.set_record_learning_topic(value)
+
     @handle_message("chat_input")
     async def handle_chat_input(self, message: ChatInputMessage):
         """
         Feed chat input from user to the LLM and stream back the response.
         """
+        check_type(message, ChatInputMessage)
+        
         text     = message.get("text", "")
         language = message.get("language", "en")
 

@@ -106,7 +106,16 @@ class PrototypeAgent:
 
         memory = MemorySaver()
         self.app = workflow.compile(checkpointer = memory)
-        
+
+        # Data privacy flag whether we are allowed to track learning topics
+        self.record_learning_topic = False
+    
+    def set_record_learning_topic(self, allow: bool):
+        """
+        Update flag whether the user allows to track the learning topics.
+        """
+        self.record_learning_topic = allow
+
     async def _send_user_message_to_llm(self, state: _State):
         """
         LangGraph node that calls the LLM to send the system prompt, the summary of the

@@ -9,6 +9,7 @@
 import datetime
 
 from bson                            import ObjectId
+from typeguard                       import check_type
 from typing                          import Literal
 from typing                          import NotRequired
 from typing                          import TypedDict

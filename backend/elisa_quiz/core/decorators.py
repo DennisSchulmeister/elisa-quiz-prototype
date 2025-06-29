@@ -34,6 +34,14 @@ def handle_message(message_code: str) -> Callable[[Callable[..., Any]], Callable
     class Handler:
         def __init__(self, parent: ParentWebsocketHandler):
             pass
+        
+        # Optional: Perform cleanup logic after the connection was closed
+        async def on_connection_closed(self):
+            pass
+        
+        # Optional: Receive notification from other handler
+        async def notify(self, key: str, value):
+            pass
     ```
     """
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:

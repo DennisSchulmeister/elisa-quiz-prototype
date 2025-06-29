@@ -9,6 +9,7 @@
 import datetime, traceback
 
 from bson                            import ObjectId
+from typeguard                       import check_type
 from typing                          import Literal
 from typing                          import NotRequired
 from typing                          import TypedDict
@@ -43,6 +44,8 @@ class ErrorDatabase:
         """
         Save the name and stack trace of a python exception.
         """
+        check_type(exception, Exception)
+        
         error_message = str(exception)
         stack_trace   = ''.join(traceback.format_exception(type(exception), exception, exception.__traceback__))
         
