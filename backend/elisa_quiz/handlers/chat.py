@@ -6,11 +6,13 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from ..core.llm        import ChatAgent
-from ..core.decorators import handle_message
-from ..core.decorators import websocket_handler
-from ..core.websocket  import ParentWebsocketHandler
-from ..core.websocket  import WebsocketMessage
+from ..agents.prototype import ActivityData
+from ..agents.prototype import ChatMessage
+from ..agents.prototype import PrototypeAgent
+from ..core.decorators  import handle_message
+from ..core.decorators  import websocket_handler
+from ..core.websocket   import ParentWebsocketHandler
+from ..core.websocket   import WebsocketMessage
 
 class ChatInputMessage(WebsocketMessage):
     """
@@ -28,7 +30,7 @@ class ChatHandler:
         Initialize client-bound handler instance.
         """
         self.parent     = parent
-        self.chat_agent = ChatAgent()
+        self.chat_agent = PrototypeAgent()
     
     @handle_message("chat_input")
     async def handle_chat_input(self, message: ChatInputMessage):
@@ -45,15 +47,14 @@ class ChatHandler:
             send_start_activity = self.send_start_activity
         )
     
-    async def send_chat_message(self, code: str, data: dict = {}):
+    async def send_chat_message(self, message: ChatMessage):
         """
         Send a chat message to the client.
         """
-        pass
-        #await self.websocket.send_json({"code": code, **data})
+        await self.parent.send_message("chat_message", message)
     
-    async def send_start_activity(self, activity: str, data):
+    async def send_start_activity(self, data: ActivityData):
         """
         Send message to start an interactive activity to the client.
         """
-        pass
+        await self.parent.send_message("start_activity", data)

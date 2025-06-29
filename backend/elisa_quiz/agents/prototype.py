@@ -17,9 +17,51 @@ from langchain_core.prompts      import SystemMessagePromptTemplate
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph             import START
 from langgraph.graph             import StateGraph
-from typing_extensions           import TypedDict
+from typeguard                   import check_type
 
-class _State(TypedDict):
+class ChatMessage(typing.TypedDict):
+    """
+    A single chat message from user to agent and vice-versa.
+    """
+    id:   uuid.UUID
+    role: typing.Literal["user", "agent"]
+    type: typing.Literal["say", "think"]
+    text: str
+
+class QuizQuestion(typing.TypedDict):
+    """
+    Question type for the quiz activity.
+    """
+    question: str
+    answers:  list[str]
+    correct:  int
+
+class QuizActivity(typing.TypedDict):
+    """
+    Quiz activity where each question has a text and several answers of which
+    exactly one is correct.
+    """
+    activity:  typing.Literal["quiz"]
+    subject:   str
+    level:     str
+    questions: list[QuizQuestion]
+
+ActivityData = QuizActivity #|OtherActivity|YetAnotherActivity
+"""The actual activity data for each activity type"""
+
+class SendChatMessageCallback(typing.Protocol):
+    """
+    Callback function that sends a chat message to the client.
+    """
+    async def __call__(self, message: ChatMessage) -> None: ...
+
+class SendStartActivityCallback(typing.Protocol):
+    """
+    Callback function that sends an interactive activity to the client.
+    """
+    async def __call__(self, data: ActivityData) -> None: ...
+
+class _State(typing.TypedDict):
     """
     Shared state for all nodes in the LLM graph.
     """
@@ -35,14 +77,11 @@ class _State(TypedDict):
     language: str
     """Currently selected language by the user."""
 
-SendMessageCallback = typing.Callable[[str, dict], typing.Awaitable[None]]
-"""Type hint for callback function that sends back chat answers to the client."""
-
-class ChatAgent:
+class PrototypeAgent:
     """
-    Wrapper class that simplifies integration with our websocket handler.
-    Wraps a few building blocks from LangChain and LangGraph to build a
-    very basic chat agent with streaming support.
+    Very first prototype built with LangChain and LangGraph. Implements a very
+    simple agent that asks the user which topic to learn, answers questions and
+    creates simple quizzes.
     """
     def __init__(self):
         # Individual thread id to distinguish concurrent conversations
@@ -125,8 +164,8 @@ class ChatAgent:
         self,
         text:                str,
         language:            str,
-        send_chat_message:   SendMessageCallback,
-        send_start_activity: SendMessageCallback,
+        send_chat_message:   SendChatMessageCallback,
+        send_start_activity: SendStartActivityCallback,
     ) -> None:
         """
         Called from the websocket handler to invoke the graph with another user message.
@@ -137,7 +176,7 @@ class ChatAgent:
             send_chat_message:   Asynchronous callback to send a chat message to the client
             send_start_activity: Asynchronous callback to send an activity to the client
         """
-        reply_id    = str(uuid.uuid4())
+        reply_id    = uuid.uuid4()
         reply_text  = ""
         json_blocks = []
         json_found  = False
@@ -188,10 +227,22 @@ class ChatAgent:
             if hasattr(chunk, "content") \
             and metadata["langgraph_node"] == "send_user_message_to_llm": # type: ignore
                 consume_chunk(chunk.content) # type: ignore
-                await send_chat_message("chat_reply", {"id": reply_id, "text": reply_text, "meta": metadata})
+
+                await send_chat_message(ChatMessage(
+                    id   = reply_id,
+                    role = "agent",
+                    type = "say",
+                    text = reply_text
+                ))
         
         for json_block in json_blocks:
-            await send_start_activity("quiz", json.loads(json_block))
+            try:
+                quiz_activity = json.loads(json_block)
+                check_type(quiz_activity, ActivityData)
+                await send_start_activity(quiz_activity)
+            except TypeError:
+                # Ignore: LLM didn't create the correct JSON structure
+                pass
 
 _SYSTEM_PROMPT="""
 # Procedure
@@ -221,6 +272,7 @@ in the following example:
 
 ```json
 {{
+    "activity": "quiz",
     "subject": "Name of the selected topic",
     "level": "Difficulty of the quiz",
     "questions": [

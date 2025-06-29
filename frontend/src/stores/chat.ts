@@ -40,7 +40,7 @@ export type MessageRole = "user" | "agent" | "error" | "status";
  * Whether the message contains normal text content (speak) or intermediate
  * reasoning steps (think)
  */
-export type MessageType = "speak" | "think";
+export type MessageType = "say" | "think";
 
 /**
  A single chat message to be displayed in the UI.
@@ -122,7 +122,7 @@ export class ChatStore {
             this.socket.addEventListener("close", () => {
                 // Show status message
                 console.error(i18n.value.Chat.ConnectionLost);
-                this.appendMessage("status", "speak", i18n.value.Chat.ConnectionLost);
+                this.appendMessage("status", "say", i18n.value.Chat.ConnectionLost);
 
                 // Try to reconnect
                 this.connectionStatus = "connection-lost";
@@ -134,7 +134,7 @@ export class ChatStore {
 
             console.error(error);
             let errorMessage = error instanceof Error ? error.message : String(error);
-            this.appendMessage("error", "speak", i18n.value.WebsocketError.FetchURL + " " + errorMessage);
+            this.appendMessage("error", "say", i18n.value.WebsocketError.FetchURL + " " + errorMessage);
 
             // Try to reconnect
             window.setTimeout(this.connect, 10000);
@@ -176,7 +176,7 @@ export class ChatStore {
             const message = JSON.stringify({ code, ...data });
             this.socket.send(message);
         } else {
-            this.appendMessage("error", "speak", _(i18n.value.WebsocketError.NotConnected, {code}));
+            this.appendMessage("error", "say", _(i18n.value.WebsocketError.NotConnected, {code}));
         }
     }
 
@@ -194,11 +194,11 @@ export class ChatStore {
             if (typeof func === "function") {
                 func.call(this, message);
             } else {
-                this.appendMessage("error", "speak", _(i18n.value.WebsocketError.UnknownMessageCode, {"code": message.code}));
+                this.appendMessage("error", "say", _(i18n.value.WebsocketError.UnknownMessageCode, {"code": message.code}));
             }
         } catch (err) {
             console.error(err);
-            this.appendMessage("error", "speak", err instanceof Error ? err.message : String(err));
+            this.appendMessage("error", "say", err instanceof Error ? err.message : String(err));
         }
     };
 
@@ -248,7 +248,7 @@ export class ChatStore {
      * @param inboundMessage - Received websocket message
      */
     private handle_error(inboundMessage: ErrorMessage) {
-        this.appendMessage("error", "speak", inboundMessage.text || i18n.value.WebsocketError.UnknownError);
+        this.appendMessage("error", "say", inboundMessage.text || i18n.value.WebsocketError.UnknownError);
     }
 
     /**
@@ -257,7 +257,7 @@ export class ChatStore {
      */
     private handleError(error: Event): void {
         const errorText = (error instanceof Error && error.message) ? error.message : i18n.value.WebsocketError.UnknownError;
-        this.appendMessage("error", "speak", errorText);
+        this.appendMessage("error", "say", errorText);
     }
 
     /**

@@ -22,6 +22,7 @@ python-dotenv = "^1.1.0"
 langchain = {extras = ["openai"], version = "^0.3.26"}
 langgraph = "^0.4.8"
 pymongo = {extras = ["encryption", "snappy", "zstd"], version = "^4.13.2"}
+typeguard = "^4.4.4"
 
 [tool.poetry.group.dev.dependencies]
 poetry-plugin-export = "^1.9.0"

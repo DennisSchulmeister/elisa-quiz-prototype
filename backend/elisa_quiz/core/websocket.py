@@ -6,18 +6,15 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-import json, traceback
+import json, traceback, typing
 
 from asyncio.exceptions import CancelledError
 from fastapi            import WebSocket
 from fastapi            import WebSocketDisconnect
-from typing             import Any
-from typing             import Type
-from typing             import TypedDict
 
 from ..database.error   import ErrorDatabase
 
-class WebsocketMessage(TypedDict):
+class WebsocketMessage(typing.TypedDict):
     """
     Base type for all messages exchanged via the websocket. The only convention is
     that it contains a string code with the message type. Depending on the code other
@@ -35,7 +32,7 @@ class ParentWebsocketHandler:
     handler_classes = []
 
     @classmethod
-    def add_handler(cls, handler: Type[Any]):
+    def add_handler(cls, handler: typing.Type[typing.Any]):
         """
         To be called at server startup to register all message handler classes.
         The classes must have been annotated with `@websocket_handler` and user
@@ -93,7 +90,7 @@ class ParentWebsocketHandler:
                 await ErrorDatabase.save_backend_exception(e)
                 await self.send_error(str(e))
 
-    async def send_message(self, code: str, data: dict = {}):
+    async def send_message(self, code: str, data: typing.Mapping[str, typing.Any] = {}):
         """
         Send a message to the client.
         """
