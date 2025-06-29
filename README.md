@@ -1,5 +1,5 @@
-Elisa: Learning Quizzes
-=======================
+Elisa: AI Learning Tutor
+========================
 
 1. [Description](#deployment)
 1. [More Information](#more-information)
@@ -88,9 +88,9 @@ sudo apt install python3 python3-poetry
 sudo apt install nodejs npm
 
 # Download source code
-# NOTE: When not installing to /opt/elisa-quiz please adopt paths in elisa-quiz.service
+# NOTE: When not installing to /opt/elisa please adopt paths in elisa.service
 cd /opt
-sudo git clone https://github.com/DennisSchulmeister/elisa-quiz.git
+sudo git clone https://github.com/DennisSchulmeister/elisa.git
 
 # Install all Node.js dependencies
 sudo npm install
@@ -112,14 +112,14 @@ sudo nano .env
 
 # Create and start SystemD service
 cd ..
-sudo cp elisa-quiz-poetry.service.template /etc/systemd/system/elisa-quiz.service
+sudo cp elisa-poetry.service.template /etc/systemd/system/elisa.service
 sudo systemctl daemon-reload
-sudo systemctl enable elisa-quiz
-sudo systemctl start elisa-quiz
+sudo systemctl enable elisa
+sudo systemctl start elisa
 
 # Check if the backend server has successfully started
-sudo systemctl status elisa-quiz
-sudo journalctl -fu elisa-quiz
+sudo systemctl status elisa
+sudo journalctl -fu elisa
 
 # Install, enable and start webserver
 sudo apt install caddy
@@ -144,7 +144,7 @@ your-domain.com {
     encode gzip
 
     file_server
-    root * /opt/elisa-quiz/frontend/static
+    root * /opt/elisa/frontend/static
     respond /api.url "https://your-domain.com"
 
     reverse_proxy /ws/* localhost:8000
@@ -194,7 +194,7 @@ the CORS preflight. Here is a short example:
 your-domain.com {
     encode gzip
     file_server
-    root * /opt/elisa-quiz/frontend/static
+    root * /opt/elisa/frontend/static
     respond /api.url "https://api.your-domain.com"
 }
 
@@ -208,7 +208,7 @@ api.your-domain.com {
 Pre-Built Distribution Package
 ==============================
 
-Download the pre-build distribution package from https://wpvs.de/repo/elisa-quiz.
+Download the pre-build distribution package from https://wpvs.de/repo/elisa.
 
 This saves you from installing [Node.js](https://nodejs.org/) and [Poetry](https://python-poetry.org/),
 so that you can directly setup the backend service and web server:
@@ -218,12 +218,12 @@ so that you can directly setup the backend service and web server:
 sudo apt install python3 python3-pip
 
 # Download source code
-# NOTE: When not installing to /opt/elisa-quiz please adopt paths in elisa-quiz.service
+# NOTE: When not installing to /opt/elisa please adopt paths in elisa.service
 cd /opt
-sudo mkdir elisa-quiz
-cd elisa-quiz
-sudo wget https://raw.githubusercontent.com/DennisSchulmeister/elisa-quiz/refs/heads/main/dist/elisa-quiz.zip
-sudo unzip elisa-quiz.zip
+sudo mkdir elisa
+cd elisa
+sudo wget https://raw.githubusercontent.com/DennisSchulmeister/elisa/refs/heads/main/dist/elisa.zip
+sudo unzip elisa.zip
 
 # Create python environment and install python dependencies
 cd backend
@@ -237,14 +237,14 @@ sudo nano .env
 
 # Create and start SystemD service
 cd ..
-sudo cp elisa-quiz-pip.service.template /etc/systemd/system/elisa-quiz.service
+sudo cp elisa-pip.service.template /etc/systemd/system/elisa.service
 sudo systemctl daemon-reload
-sudo systemctl enable elisa-quiz
-sudo systemctl start elisa-quiz
+sudo systemctl enable elisa
+sudo systemctl start elisa
 
 # Check if the backend server has successfully started
-sudo systemctl status elisa-quiz
-sudo journalctl -fu elisa-quiz
+sudo systemctl status elisa
+sudo journalctl -fu elisa
 
 # Install, enable and start webserver
 sudo apt install caddy
@@ -315,8 +315,8 @@ docker compose up -d
 To inspect the running containers:
 
 ```sh
-docker exec -it elisa-quiz-frontend-1 /bin/sh
-docker exec -it elisa-quiz-backend-1 /bin/sh
+docker exec -it elisa-frontend-1 /bin/sh
+docker exec -it elisa-backend-1 /bin/sh
 ```
 
 Copyright

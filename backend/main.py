@@ -17,4 +17,4 @@ if __name__ == "__main__":
     parser.add_argument("--reload", action="store_true", default=os.getenv("UVICORN_RELOAD", "false").lower() == "true")
     args = parser.parse_args()
 
-    uvicorn.run("elisa_quiz.app:app", host=args.host, port=args.port, reload=args.reload)
+    uvicorn.run("elisa.app:app", host=args.host, port=args.port, reload=args.reload)

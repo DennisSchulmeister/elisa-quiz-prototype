@@ -1,7 +1,7 @@
 {
-  "name": "@dschulmeis/elisa-quiz-prototyp",
+  "name": "@dschulmeis/elisa-frontend",
   "version": "1.0.0",
-  "description": "Prototype for AI generated learning quizzes",
+  "description": "ELISA: AI Learning Tutor (frontend)",
   "author": "Dennis Schulmeister-Zimolong",
   "type": "module",
   "scripts": {

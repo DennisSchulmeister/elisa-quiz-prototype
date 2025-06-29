@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "elisa-ai-quiz-backend"
+name = "elisa-backend"
 version = "0.1.0"
-description = "AI Learning Quizzes (backend)"
+description = "ELISA: AI Learning Tutor (backend)"
 authors = ["Dennis Schulmeister-Zimolong <dennis@wpvs.de>"]
-homepage = "https://openbook.studio"
-repository = "https://github.com/DennisSchulmeister/elisa-quiz"
+homepage = "https://lernspiel.online"
+repository = "https://github.com/DennisSchulmeister/elisa"
 license = "AGPL-3.0"
 readme = "README.md"
 

@@ -2,18 +2,18 @@
 # Afterwards use the following shell commands to automatically start the server:
 #
 # sudo systemctl daemon-reload
-# sudo systemctl enable elisa-quiz.service
-# sudo systemctl start elisa-quiz.service
+# sudo systemctl enable elisa.service
+# sudo systemctl start elisa.service
 #
-# Version using the poetry package manager for python.
+# Version using plain pip and python.
 
 [Unit]
 Description=Elisa Quiz (Backend)
 After=network.target
 
 [Service]
-WorkingDirectory=/opt/elisa-quiz/backend
-ExecStart=/usr/bin/poetry run ./main.py
+WorkingDirectory=/opt/elisa/backend
+ExecStart=.venv/bin/python3 main.py
 Restart=on-failure
 RestartSec=5
 User=your-username

@@ -1,8 +1,8 @@
-Developer Notes for ELISA: AI Learning Quizzes
-==============================================
+Developer Notes for ELISA: AI Learning Tutor
+============================================
 
 This document serves as a cheat sheet for developers to get started quickly. There are no
-fancy things -- if you already know Python, Poetry,NPM, LangChain, FastAPI, … 🥸 But finding
+fancy things -- if you already know Python, Poetry, NPM, LangChain, FastAPI, … 🥸 But finding
 the right information might not be easy when working with so much different technology. This
 document tries to summarize a few things.
 
@@ -66,7 +66,7 @@ few things to make everything work.
 * Python - Programming Language
 * Poetry - Package Management
 * FastAPI - Web framework
-* LangChain - AI/LLM functionality
+* AutoGen - AI/LLM functionality
 
 ### Frontend
 
@@ -121,4 +121,4 @@ Then run `npm run dist` from the root directory. This should rebuild everything 
 a new file in the `dist/` directory. This requires the `git` and `zip` command on your machine,
 hence it is not 100% cross-platform compatible.
 
-For the time being this file is then manually renamed and copied to https://wpvs.de/repo/elisa-quiz.
+For the time being this file is then manually renamed and copied to https://wpvs.de/repo/elisa.

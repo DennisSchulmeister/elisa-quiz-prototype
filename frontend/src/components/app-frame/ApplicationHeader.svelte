@@ -14,6 +14,7 @@ Application header that is permanently visible at the top of the screen. Shows t
 app title and some information about the quiz.
 -->
 <script lang="ts">
+    import Logo           from "./logo.png";
     import {i18n}         from "../../stores/i18n.js";
     import {pageTitle}    from "../../stores/page.js";
     import {pageSubTitle} from "../../stores/page.js";
@@ -21,7 +22,7 @@ app title and some information about the quiz.
 
 <header>
     <div class="app-name">
-        <img src="./logo.png" alt="">
+        <img src={Logo} alt="">
         {$i18n.AppShell.Title}
     </div>
     <div class="quiz-title">
