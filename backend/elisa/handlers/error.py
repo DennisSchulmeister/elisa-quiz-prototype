@@ -23,6 +23,13 @@ class FrontendErrorMessage(WebsocketMessage):
     error_message: str
     stack_trace:   typing.NotRequired[str]
 
+class BugReportMessage(WebsocketMessage):
+    """
+    Manual bug report filled-in within the frontend.
+    """
+    description: str
+    contact:     str
+
 @websocket_handler
 class ErrorHandler:
     """
@@ -41,7 +48,19 @@ class ErrorHandler:
         """
         check_type(message, FrontendErrorMessage)
         
-        await ErrorDatabase.save_frontend_exception(
+        await ErrorDatabase.insert_frontend_exception(
             error_message = message["error_message"],
             stack_trace   = message.get("stack_trace", "")
+        )
+    
+    @handle_message("bug_report")
+    async def handle_bug_report(self, message: BugReportMessage):
+        """
+        Save manual bug report received from frontend.
+        """
+        check_type(message, BugReportMessage)
+
+        await ErrorDatabase.insert_bug_report(
+            description = message["description"],
+            contact     = message["contact"],
         )

@@ -29,6 +29,16 @@ class ErrorEntry(TypedDict):
     error_message: str
     stack_trace:   NotRequired[str]
 
+class BugReport(TypedDict):
+    """
+    Manual bug report filled-in within the frontend.
+    """
+    _id:         NotRequired[ObjectId]
+    timestamp:   datetime.datetime
+    description: str
+    contact:     str
+    status:      Literal["new", "in-progress", "resolved", "works-for-me", "wont-fix"]
+
 class ErrorDatabase:
     """
     Database for crash reports and stack traces
@@ -39,8 +49,11 @@ class ErrorDatabase:
     errors: AsyncCollection[ErrorEntry] = mongo_client.error_reports.errors
     """Error collection"""
 
+    bug_reports: AsyncCollection[BugReport] = mongo_client.error_reports.bug_reports
+    """Manual bug reports"""
+
     @classmethod
-    async def save_backend_exception(cls, exception: Exception) -> ObjectId:
+    async def insert_backend_exception(cls, exception: Exception) -> ObjectId:
         """
         Save the name and stack trace of a python exception.
         """
@@ -60,7 +73,7 @@ class ErrorDatabase:
         return result.inserted_id
 
     @classmethod
-    async def save_frontend_exception(cls, error_message: str, stack_trace: str) -> ObjectId:
+    async def insert_frontend_exception(cls, error_message: str, stack_trace: str) -> ObjectId:
         """
         Save the name and stack trace of a frontend exception.
         """
@@ -75,7 +88,7 @@ class ErrorDatabase:
         return result.inserted_id
 
     @classmethod
-    async def save_error_message(cls, error_message: str) -> ObjectId:
+    async def insert_error_message(cls, error_message: str) -> ObjectId:
         """
         Save an error message sent to the client without raising an exception.
         """
@@ -86,4 +99,19 @@ class ErrorDatabase:
         )
 
         result = await cls.errors.insert_one(error)
+        return result.inserted_id
+
+    @classmethod
+    async def insert_bug_report(cls, description: str, contact: str) -> ObjectId:
+        """
+        Save a new manual bug report.
+        """
+        bug_report = BugReport(
+            timestamp   = now(),
+            description = description,
+            contact     = contact,
+            status      = "new",
+        )
+
+        result = await cls.bug_reports.insert_one(bug_report)
         return result.inserted_id

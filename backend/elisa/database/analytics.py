@@ -69,7 +69,7 @@ class AnalyticsDatabase:
     """Anonymous keyword of learned topic."""
 
     @classmethod
-    async def save_user_feedback(cls, feedback: UserFeedback) -> ObjectId:
+    async def insert_user_feedback(cls, feedback: UserFeedback) -> ObjectId:
         """
         Save a new anonymous user feedback.
         """
@@ -114,7 +114,7 @@ class AnalyticsDatabase:
         await cls.usage_times.delete_one({"_id": object_id})
 
     @classmethod
-    async def add_learning_topic(cls, keyword: str):
+    async def upsert_learning_topic(cls, keyword: str):
         """
         Create a new learning topic or increase its count, if it already exists.
         """

@@ -75,7 +75,7 @@ class ParentWebsocketHandler:
                 
                 if not handled:
                     error_text = f"Unknown message code: {message["code"]}"
-                    await ErrorDatabase.save_error_message(error_text)
+                    await ErrorDatabase.insert_error_message(error_text)
                     await self.send_error(error_text)
             except (CancelledError, KeyboardInterrupt):
                 print("Shutdown server", flush=True)
@@ -87,7 +87,7 @@ class ParentWebsocketHandler:
                 traceback.print_exc()
                 print(flush=True)
 
-                await ErrorDatabase.save_backend_exception(e)
+                await ErrorDatabase.insert_backend_exception(e)
                 await self.send_error(str(e))
             
             for handler in self.handlers:
@@ -97,7 +97,7 @@ class ParentWebsocketHandler:
                 except Exception as e:
                     traceback.print_exc()
                     print(flush=True)
-                    await ErrorDatabase.save_backend_exception(e)
+                    await ErrorDatabase.insert_backend_exception(e)
 
     async def send_message(self, code: str, data: typing.Mapping[str, typing.Any] = {}):
         """
@@ -124,4 +124,4 @@ class ParentWebsocketHandler:
             except Exception as e:
                 traceback.print_exc()
                 print(flush=True)
-                await ErrorDatabase.save_backend_exception(e)
+                await ErrorDatabase.insert_backend_exception(e)

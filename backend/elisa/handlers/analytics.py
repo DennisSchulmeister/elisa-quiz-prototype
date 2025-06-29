@@ -49,7 +49,7 @@ class AnalyticsHandler:
         """
         # Type-check not necessary, as the message contains no more fields
         # then already checked within the save method.
-        await AnalyticsDatabase.save_user_feedback(message)
+        await AnalyticsDatabase.insert_user_feedback(message)
     
     @handle_message("privacy_settings")
     async def handle_privacy_settings(self, message: PrivacySettingsMessage):
