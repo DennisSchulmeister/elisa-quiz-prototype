@@ -18,17 +18,20 @@ from pymongo.asynchronous.collection import AsyncCollection
 from ..core.database                 import mongo_client
 from ..core.database                 import now
 
-class UserFeedback(TypedDict):
+class UserFeedback_V1(TypedDict):
     """
     Anonymous user feedback via the built-in survey form. This helps us to
     understand the users and what features they wish.
     """
     _id:             NotRequired[ObjectId]
+    survey_version:  Literal[1]
     timestamp:       datetime.datetime
     user_type:       Literal["student", "teacher", "other"]
     star_rating:     int
     wanted_features: list[str]
     comment:         str
+
+UserFeedback = UserFeedback_V1
 
 class UsageTime(TypedDict):
     """
