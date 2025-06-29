@@ -6,10 +6,11 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from ..core.llm       import ChatAgent
-from ..core.websocket import AbstractWebsocketHandler
-from ..core.websocket import ParentWebsocketHandler
-from ..core.websocket import WebsocketMessage
+from ..core.llm        import ChatAgent
+from ..core.decorators import handle_message
+from ..core.decorators import websocket_handler
+from ..core.websocket  import ParentWebsocketHandler
+from ..core.websocket  import WebsocketMessage
 
 class ChatInputMessage(WebsocketMessage):
     """
@@ -17,7 +18,8 @@ class ChatInputMessage(WebsocketMessage):
     """
     text: str
 
-class ChatHandler(AbstractWebsocketHandler):
+@websocket_handler
+class ChatHandler:
     """
     Websocket message for chat conversations and LLM-based activities.
     """
@@ -28,12 +30,30 @@ class ChatHandler(AbstractWebsocketHandler):
         self.parent     = parent
         self.chat_agent = ChatAgent()
     
-    # TODO: Not possible to inherit classmethod decorators
-    @handle("chat_input")
+    @handle_message("chat_input")
     async def handle_chat_input(self, message: ChatInputMessage):
         """
         Feed chat input from user to the LLM and stream back the response.
         """
         text     = message.get("text", "")
         language = message.get("language", "en")
-        await self.chat_agent.invoke_with_new_user_message(text, language, self.parent.send_message)
+
+        await self.chat_agent.invoke_with_new_user_message(
+            text                = text,
+            language            = language,
+            send_chat_message   = self.send_chat_message,
+            send_start_activity = self.send_start_activity
+        )
+    
+    async def send_chat_message(self, code: str, data: dict = {}):
+        """
+        Send a chat message to the client.
+        """
+        pass
+        #await self.websocket.send_json({"code": code, **data})
+    
+    async def send_start_activity(self, activity: str, data):
+        """
+        Send message to start an interactive activity to the client.
+        """
+        pass

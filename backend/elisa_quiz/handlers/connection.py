@@ -12,10 +12,9 @@ from ..core.websocket  import ParentWebsocketHandler
 from ..core.websocket  import WebsocketMessage
 
 @websocket_handler
-class AnalyticsHandler:
+class ConnectionHandler:
     """
-    Websocket message handler for anonymous usage statistics and anonymous
-    user feedback.
+    Websocket message handler for crash reports and stack traces.
     """
     
     def __init__(self, parent: ParentWebsocketHandler):
@@ -23,3 +22,10 @@ class AnalyticsHandler:
         Initialize client-bound handler instance.
         """
         self.parent = parent
+
+    @handle_message("ping")
+    async def handle_ping(self, message: WebsocketMessage):
+        """
+        Handle ping message. Send back pong.
+        """
+        await self.parent.send_message("pong")

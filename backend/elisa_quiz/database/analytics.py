@@ -5,8 +5,34 @@
 # it under the terms of the GNU Affero General Public License as
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
+import datetime
 
-from ..core.database import mongo_client
+from bson                            import ObjectId
+from typing                          import Literal
+from typing                          import NotRequired
+from typing                          import TypedDict
+from pymongo.asynchronous.collection import AsyncCollection
 
-analytics_db = mongo_client.analytics
-"""Database for anonymous usage statistics and anonymous user feedback"""
+from ..core.database                 import mongo_client
+from ..core.database                 import now
+
+# class Error(TypedDict):
+#     """
+#     Error or crash report that helps to analyze and fix bugs that occurred
+#     in production.
+#     """
+#     _id:           NotRequired[ObjectId]
+#     timestamp:     datetime.datetime
+#     error_type:    Literal["backend", "frontend", "message"]
+#     error_message: str
+#     stack_trace:   str
+
+class AnalyticsDatabase:
+    """
+    Database for anonymous usage statistics and anonymous user feedback
+    """
+    db = mongo_client.analytics
+    """Mongo database instance"""
+
+    # errors: AsyncCollection[ErrorEntry] = mongo_client.error_reports.errors
+    # """Error collection"""

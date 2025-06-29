@@ -6,7 +6,34 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from ..core.database import mongo_client
+import datetime
 
-user_db = mongo_client.users
-"""Database for regular user data"""
+from bson                            import ObjectId
+from typing                          import Literal
+from typing                          import NotRequired
+from typing                          import TypedDict
+from pymongo.asynchronous.collection import AsyncCollection
+
+from ..core.database                 import mongo_client
+from ..core.database                 import now
+
+# class Error(TypedDict):
+#     """
+#     Error or crash report that helps to analyze and fix bugs that occurred
+#     in production.
+#     """
+#     _id:           NotRequired[ObjectId]
+#     timestamp:     datetime.datetime
+#     error_type:    Literal["backend", "frontend", "message"]
+#     error_message: str
+#     stack_trace:   str
+
+class UserDatabase:
+    """
+    Database for regular user data
+    """
+    db = mongo_client.users
+    """Mongo database instance"""
+
+    # errors: AsyncCollection[ErrorEntry] = mongo_client.error_reports.errors
+    # """Error collection"""

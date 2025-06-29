@@ -6,40 +6,24 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-import json, traceback, typing
+import json, traceback
 
 from asyncio.exceptions import CancelledError
 from fastapi            import WebSocket
 from fastapi            import WebSocketDisconnect
+from typing             import Any
+from typing             import Type
+from typing             import TypedDict
 
-class WebsocketMessage(typing.TypedDict):
+from ..database.error   import ErrorDatabase
+
+class WebsocketMessage(TypedDict):
     """
     Base type for all messages exchanged via the websocket. The only convention is
-    that is contains a string code the defines the message type. Depending on the
-    code other keys will be present.
+    that it contains a string code with the message type. Depending on the code other
+    keys will be present.
     """
     code: str
-
-class AbstractWebsocketHandler:
-    """
-    Abstract parent class for websocket handlers, except the parent handler. This
-    provides the mechanism for handlers to register handler methods, allowing the
-    parent web socket handler to instantiate a new handler instance for each new
-    client connection and call the appropriate handler methods for each message.
-    """
-
-    @classmethod
-    def handle(cls, message_code: str):
-        """
-        TODO: Typing and more
-        """
-        def decorator(func):
-            def wrapper(*args, **kwargs):
-                return func(*args, **kwargs)
-
-            return wrapper
-
-        return decorator
 
 class ParentWebsocketHandler:
     """
@@ -48,33 +32,54 @@ class ParentWebsocketHandler:
     is no multi-player mode, yet. But chat messages are streamed in real-time to
     the frontend, which in turn renders the quiz game accordingly.
     """
+    handler_classes = []
+
+    @classmethod
+    def add_handler(cls, handler: Type[Any]):
+        """
+        To be called at server startup to register all message handler classes.
+        The classes must have been annotated with `@websocket_handler` and user
+        the `@handle_message` decorator to annotate methods for each websocket
+        message type.
+        """
+        if not hasattr(handler, "_message_handlers"):
+            raise KeyError(f"Handler class is missing @websocket_handler decorator: {handler}")
+
+        cls.handler_classes.append(handler)
+
     def __init__(self, websocket: WebSocket):
         """
         Initialize client-bound handler instance.
         """
         self.websocket = websocket
+        self.handlers  = [handler(parent=self) for handler in self.__class__.handler_classes]
 
     async def run(self):
         """
-        Main loop to accept web socket messages. Simply calls the respective handler
-        function based on the received message code.
+        Main loop to receive and handle web socket messages. Simply calls the respective handlers
+        based on the message code.
         """
         await self.websocket.accept()
 
         while True:
             try:
+                handled = False
                 message = json.loads(await self.websocket.receive_text())
 
                 if not isinstance(message, dict) or "code" not in message:
                     raise ValueError("Invalid message format")
                 
-                handler = f"handle_{message["code"]}"
+                for handler in self.handlers:
+                    if message["code"] in handler._message_handlers:
+                        handled = True
 
-                if hasattr(self, handler):
-                    func = getattr(self, handler)
-                    await func(message)
-                else:
-                    await self.send_error(f"Unknown message code: {message["code"]}")
+                        for func in handler._message_handlers[message["code"]]:
+                            await func(message)
+                
+                if not handled:
+                    error_text = f"Unknown message code: {message["code"]}"
+                    await ErrorDatabase.save_error_message(error_text)
+                    await self.send_error(error_text)
             except (CancelledError, KeyboardInterrupt):
                 print("Shutdown server", flush=True)
                 break
@@ -84,6 +89,8 @@ class ParentWebsocketHandler:
             except Exception as e:
                 traceback.print_exc()
                 print(flush=True)
+
+                await ErrorDatabase.save_backend_exception(e)
                 await self.send_error(str(e))
 
     async def send_message(self, code: str, data: dict = {}):
@@ -97,9 +104,3 @@ class ParentWebsocketHandler:
         Send error message to the client.
         """
         await self.send_message("error", {"text": text})
-
-    async def handle_ping(self, message: WebsocketMessage):
-        """
-        Handle ping message. Send back pong.
-        """
-        await self.send_message("pong")

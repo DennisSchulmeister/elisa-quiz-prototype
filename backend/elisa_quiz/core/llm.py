@@ -121,9 +121,21 @@ class ChatAgent:
         response = await self.chat_model.ainvoke(prompt)
         return {"summary": response.content, "buffer": []}
 
-    async def invoke_with_new_user_message(self, text: str, language: str, callback: SendMessageCallback) -> None:
+    async def invoke_with_new_user_message(
+        self,
+        text:                str,
+        language:            str,
+        send_chat_message:   SendMessageCallback,
+        send_start_activity: SendMessageCallback,
+    ) -> None:
         """
         Called from the websocket handler to invoke the graph with another user message.
+
+        Parameters:
+            text:                Chat message from the user
+            language:            Language to reply in
+            send_chat_message:   Asynchronous callback to send a chat message to the client
+            send_start_activity: Asynchronous callback to send an activity to the client
         """
         reply_id    = str(uuid.uuid4())
         reply_text  = ""
@@ -176,10 +188,10 @@ class ChatAgent:
             if hasattr(chunk, "content") \
             and metadata["langgraph_node"] == "send_user_message_to_llm": # type: ignore
                 consume_chunk(chunk.content) # type: ignore
-                await callback("chat_reply", {"id": reply_id, "text": reply_text, "meta": metadata})
+                await send_chat_message("chat_reply", {"id": reply_id, "text": reply_text, "meta": metadata})
         
         for json_block in json_blocks:
-            await callback("quiz", {"data": json.loads(json_block)})
+            await send_start_activity("quiz", json.loads(json_block))
 
 _SYSTEM_PROMPT="""
 # Procedure
