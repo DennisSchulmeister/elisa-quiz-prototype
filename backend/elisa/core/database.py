@@ -11,7 +11,7 @@ import datetime, os, pymongo
 mongodb_url = os.environ.get("MONGODB_URL", "mongodb://localhost:27017")
 """Connection string for the mongo database (read-only)"""
 
-mongo_client = pymongo.AsyncMongoClient(mongodb_url)
+mongo_client = pymongo.AsyncMongoClient(mongodb_url, tz_aware=True)
 """Asynchronous mongo client"""
 
 def now() -> datetime.datetime:
