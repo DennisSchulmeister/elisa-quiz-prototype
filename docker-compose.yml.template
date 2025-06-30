@@ -66,7 +66,8 @@ services:
       #UVICORN_PORT:   8000
       #UVICORN_RELOAD: false
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
 
   #============================================================================
   # Mongo Database
@@ -87,6 +88,16 @@ services:
       # Change normal database user credentials! The script only runs once when
       # the mongo data directory is empty.
       - ./backend/docker/mongo-users.js:/docker-entrypoint-initdb.d/mongo-users.js
+      # Create initial indices.
+      - ./backend/docker/create-indices.js:/docker-entrypoint-initdb.d/create-indices.js
+    # Health check so that other services don'tt try to connect when mongo
+    # is not yet ready.
+    healthcheck:
+      test:  echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
 
 volumes:
   caddy_data:

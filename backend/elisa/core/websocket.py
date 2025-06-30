@@ -11,11 +11,11 @@ import json, traceback, typing
 from asyncio.exceptions import CancelledError
 from fastapi            import WebSocket
 from fastapi            import WebSocketDisconnect
-from typeguard          import check_type
 
+from ..core.typing      import check_type
 from ..database.error   import ErrorDatabase
 
-class WebsocketMessage(typing.TypedDict):
+class WebsocketMessage(typing.TypedDict, total=False):
     """
     Base type for all messages exchanged via the websocket. The only convention is
     that it contains a string code with the message type. Depending on the code other
@@ -71,7 +71,7 @@ class ParentWebsocketHandler:
                         handled = True
 
                         for func in handler._message_handlers[message["code"]]:
-                            await func(message)
+                            await func(handler, message)
                 
                 if not handled:
                     error_text = f"Unknown message code: {message["code"]}"
@@ -84,20 +84,21 @@ class ParentWebsocketHandler:
                 print("Client disconnected", flush=True)
                 break
             except Exception as e:
+                print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>")
                 traceback.print_exc()
                 print(flush=True)
 
                 await ErrorDatabase.insert_backend_exception(e)
                 await self.send_error(str(e))
             
-            for handler in self.handlers:
-                try:
-                    if hasattr(handler, "on_connection_closed"):
-                        await handler.on_connection_closed()
-                except Exception as e:
-                    traceback.print_exc()
-                    print(flush=True)
-                    await ErrorDatabase.insert_backend_exception(e)
+        for handler in self.handlers:
+            try:
+                if hasattr(handler, "on_connection_closed"):
+                    await handler.on_connection_closed()
+            except Exception as e:
+                traceback.print_exc()
+                print(flush=True)
+                await ErrorDatabase.insert_backend_exception(e)
 
     async def send_message(self, code: str, data: typing.Mapping[str, typing.Any] = {}):
         """

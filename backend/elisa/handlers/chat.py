@@ -6,8 +6,6 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from typeguard          import check_type
-
 from ..agents.prototype import ChatMessage
 from ..agents.prototype import EndActivityData
 from ..agents.prototype import PersistedConversation
@@ -15,6 +13,7 @@ from ..agents.prototype import PrototypeAgent
 from ..agents.prototype import StartActivityData
 from ..core.decorators  import handle_message
 from ..core.decorators  import websocket_handler
+from ..core.typing      import check_type
 from ..core.websocket   import ParentWebsocketHandler
 from ..core.websocket   import WebsocketMessage
 

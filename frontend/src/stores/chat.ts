@@ -107,7 +107,7 @@ export class ChatStore {
 
             // Establish connection
             const response = await fetch("/api.url");
-            const wsUrl = (await response.text()).trim() + "/ws/chat";
+            const wsUrl = (await response.text()).trim();
 
             this.socket = new WebSocket(wsUrl);
             this.socket.addEventListener("message", this.handleMessage.bind(this));

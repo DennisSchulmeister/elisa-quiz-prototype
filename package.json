@@ -9,6 +9,7 @@
         "start:frontend": "cd frontend && npm start",
         "start:docker":   "docker compose -f docker-compose-dev.yml up",
         "mongo:cli": "docker exec -it elisa-mongodb-1 mongosh -u admin -p secret",
+        "wscat": "npx wscat -c ws://localhost:8000",
         "dist": "npm run dist:frontend && npm run dist:backend && npm run dist:finish",
         "dist:frontend": "cd frontend && npm run build",
         "dist:backend": "cd backend && poetry export --format=requirements.txt --output=requirements.txt",

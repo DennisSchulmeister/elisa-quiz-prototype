@@ -8,10 +8,9 @@
 
 import typing
 
-from typeguard         import check_type
-
 from ..core.decorators import handle_message
 from ..core.decorators import websocket_handler
+from ..core.typing     import check_type
 from ..core.websocket  import ParentWebsocketHandler
 from ..core.websocket  import WebsocketMessage
 from ..database.error  import ErrorDatabase

@@ -7,16 +7,16 @@
 # License, or (at your option) any later version.
 
 from bson                 import ObjectId
-from typeguard            import check_type
 
 from ..core.decorators    import handle_message
 from ..core.decorators    import websocket_handler
+from ..core.typing        import check_type
 from ..core.websocket     import ParentWebsocketHandler
 from ..core.websocket     import WebsocketMessage
 from ..database.analytics import AnalyticsDatabase
-from ..database.analytics import UserFeedback
+from ..database.analytics import UserFeedback_V1_Base
 
-class UserFeedbackMessage(WebsocketMessage, UserFeedback):
+class UserFeedbackMessage(WebsocketMessage, UserFeedback_V1_Base):
     """
     Anonymous user feedback via the built-in survey form.
     """

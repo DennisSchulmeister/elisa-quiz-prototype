@@ -17,12 +17,12 @@ from langchain_core.prompts      import SystemMessagePromptTemplate
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph             import START
 from langgraph.graph             import StateGraph
-from typeguard                   import check_type
 from typing                      import Literal
 from typing                      import NotRequired
-from typing                      import Optional
 from typing                      import Protocol
 from typing                      import TypedDict
+
+from ..core.typing               import check_type
 
 class ChatMessage(TypedDict):
     """

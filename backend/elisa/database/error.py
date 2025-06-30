@@ -9,7 +9,6 @@
 import datetime, traceback
 
 from bson                            import ObjectId
-from typeguard                       import check_type
 from typing                          import Literal
 from typing                          import NotRequired
 from typing                          import TypedDict
@@ -17,6 +16,7 @@ from pymongo.asynchronous.collection import AsyncCollection
 
 from ..core.database                 import mongo_client
 from ..core.database                 import now
+from ..core.typing                   import check_type
 
 class ErrorEntry(TypedDict):
     """
@@ -43,13 +43,13 @@ class ErrorDatabase:
     """
     Database for crash reports and stack traces
     """
-    db = mongo_client.error_reports
+    db = mongo_client.error
     """Mongo database instance"""
 
-    errors: AsyncCollection[ErrorEntry] = mongo_client.error_reports.errors
+    errors: AsyncCollection[ErrorEntry] = mongo_client.error.errors
     """Error collection"""
 
-    bug_reports: AsyncCollection[BugReport] = mongo_client.error_reports.bug_reports
+    bug_reports: AsyncCollection[BugReport] = mongo_client.error.bug_reports
     """Manual bug reports"""
 
     @classmethod
@@ -57,8 +57,6 @@ class ErrorDatabase:
         """
         Save the name and stack trace of a python exception.
         """
-        check_type(exception, Exception)
-        
         error_message = str(exception)
         stack_trace   = ''.join(traceback.format_exception(type(exception), exception, exception.__traceback__))
         

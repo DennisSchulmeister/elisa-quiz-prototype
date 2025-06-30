@@ -8,9 +8,11 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-import argparse, os, uvicorn
+import argparse, dotenv, os, uvicorn
 
 if __name__ == "__main__":
+    dotenv.load_dotenv()
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", default=os.getenv("UVICORN_HOST", "127.0.0.1"))
     parser.add_argument("--port", type=int, default=int(os.getenv("UVICORN_PORT", 8000)))

@@ -9,7 +9,6 @@
 import datetime
 
 from bson                            import ObjectId
-from typeguard                       import check_type
 from typing                          import Literal
 from typing                          import NotRequired
 from typing                          import TypedDict
@@ -17,21 +16,29 @@ from pymongo.asynchronous.collection import AsyncCollection
 
 from ..core.database                 import mongo_client
 from ..core.database                 import now
+from ..core.typing                   import check_type
 
-class UserFeedback_V1(TypedDict):
+class UserFeedback_V1_Base(TypedDict):
+    survey_version:    Literal[1]
+    star_rating:       int
+    user_type:         Literal["student", "teacher", "other"]
+    user_type_other:   NotRequired[str]
+    edu_context:       Literal["primary", "secondary-1", "secondary-2", "vocational", "bachelor", "master", "other"]
+    edu_context_other: NotRequired[str]
+    learning_style:    Literal["supplied-materials", "guided", "independent"]
+    wanted_features:   list[str]
+    comment:           str
+
+class UserFeedback_V1(UserFeedback_V1_Base):
     """
     Anonymous user feedback via the built-in survey form. This helps us to
     understand the users and what features they wish.
     """
     _id:             NotRequired[ObjectId]
-    survey_version:  Literal[1]
     timestamp:       datetime.datetime
-    user_type:       Literal["student", "teacher", "other"]
-    star_rating:     int
-    wanted_features: list[str]
-    comment:         str
-
+    
 UserFeedback = UserFeedback_V1
+UserFeedback_Base = UserFeedback_V1_Base
 
 class UsageTime(TypedDict):
     """
@@ -69,12 +76,18 @@ class AnalyticsDatabase:
     """Anonymous keyword of learned topic."""
 
     @classmethod
-    async def insert_user_feedback(cls, feedback: UserFeedback) -> ObjectId:
+    async def insert_user_feedback(cls, feedback: UserFeedback_Base) -> ObjectId:
         """
         Save a new anonymous user feedback.
         """
-        check_type(feedback, UserFeedback)
-        result = await cls.user_feedbacks.insert_one(feedback)
+        check_type(feedback, UserFeedback_Base)
+
+        _feedback: UserFeedback = {
+            **feedback,
+            "timestamp": now(),
+        }
+
+        result = await cls.user_feedbacks.insert_one(_feedback)
         return result.inserted_id
     
     @classmethod

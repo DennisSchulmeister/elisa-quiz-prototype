@@ -7,11 +7,9 @@
 # License, or (at your option) any later version.
 
 from contextlib           import asynccontextmanager
-from dotenv               import load_dotenv
 from fastapi              import FastAPI
 from fastapi              import WebSocket
 
-from .core.database       import init_database
 from .core.websocket      import ParentWebsocketHandler
 from .handlers.analytics  import AnalyticsHandler
 from .handlers.chat       import ChatHandler
@@ -21,10 +19,6 @@ from .handlers.error      import ErrorHandler
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Start-up code before handling requests
-    load_dotenv()
-
-    await init_database()
-
     ParentWebsocketHandler.add_handler(AnalyticsHandler)
     ParentWebsocketHandler.add_handler(ChatHandler)
     ParentWebsocketHandler.add_handler(ConnectionHandler)
@@ -37,7 +31,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-@app.websocket("/ws/chat")
+@app.websocket("/")
 async def chat_websocket(websocket: WebSocket):
     handler = ParentWebsocketHandler(websocket)
     await handler.run()

@@ -9,7 +9,6 @@
 import datetime
 
 from bson                            import ObjectId
-from typeguard                       import check_type
 from typing                          import Literal
 from typing                          import NotRequired
 from typing                          import TypedDict
@@ -17,6 +16,7 @@ from pymongo.asynchronous.collection import AsyncCollection
 
 from ..core.database                 import mongo_client
 from ..core.database                 import now
+from ..core.typing                   import check_type
 
 # class Error(TypedDict):
 #     """
@@ -33,7 +33,7 @@ class UserDatabase:
     """
     Database for regular user data
     """
-    db = mongo_client.users
+    db = mongo_client.user
     """Mongo database instance"""
 
     # errors: AsyncCollection[ErrorEntry] = mongo_client.error_reports.errors
