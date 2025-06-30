@@ -26,7 +26,7 @@ def check_type(value: object, typed_dict_type: Any) -> None:
     for key, expected_type in annotations.items():
         if key not in value:
             if key in required_keys:
-                raise TypeError(f"Missing required key'{key}'")
+                raise TypeError(f"Missing required key '{key}'")
             continue
 
         _check_type(value[key], expected_type)

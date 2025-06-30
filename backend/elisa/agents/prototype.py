@@ -29,7 +29,7 @@ class ChatMessage(TypedDict):
     A single chat message as exchanged between frontend and backend or stored
     in the message history.
     """
-    id:   NotRequired[uuid.UUID]
+    id:   NotRequired[str]
     name: Literal["User", "Agent", "Summarizer"]
     type: Literal["say", "think"]
     text: str
@@ -91,6 +91,11 @@ class PersistedConversation(TypedDict):
     A whole conversation thread persisted to resume the conversation later
     with a new client connection. Basically contains all non-transient fields
     of the workflow state and the thread id.
+
+    Note, that the frontend already has the full message history. Therefor it
+    is neither recorded server-side nor sent back to the client. To fully restore
+    a previous conversation the client must restore the message history plus the
+    state received here. The latter must be sent to the backend.
     """
     thread_id: str
     """Thread id to distinguish conversations"""
@@ -101,9 +106,6 @@ class PersistedConversation(TypedDict):
     summary: str
     """Constantly updated summary of the past conversation"""
 
-    language: str
-    """Currently selected language by the user."""
-
 class _State(TypedDict):
     """
     Shared state for all nodes in the LLM graph.
@@ -113,6 +115,9 @@ class _State(TypedDict):
 
     _resume: NotRequired[PersistedConversation]
     """Private key to inject the state when an old conversation shall be resumed"""
+
+    _hidden: bool
+    """Hidden user message that will not be logged in the buffer of summary"""
 
     buffer: list[ChatMessage]
     """Past messages not yet contained in the summary."""
@@ -192,23 +197,21 @@ class PrototypeAgent:
             self.thread_id = str(uuid.uuid4())
 
             return {
-                "_reset":     False,
-                "_resume":    None,
-                "buffer":     [],
-                "summary":    "",
-                "language":   "",
-                "user_input": "",
+                "_reset":  False,
+                "_resume": None,
+                "_hidden": False,
+                "buffer":  [],
+                "summary": "",
             }
         elif "_resume" in state and state["_resume"]:
             self.thread_id = state["_resume"].get("thread_id", str(uuid.uuid4()))
 
             return {
-                "_reset":     False,
-                "_resume":    None,
-                "buffer":     state["_resume"].get("buffer", []),
-                "summary":    state["_resume"].get("summary", ""),
-                "language":   state["_resume"].get("language", ""),
-                "user_input": "",
+                "_reset":   False,
+                "_resume":  None,
+                "_hidden":  False,
+                "buffer":   state["_resume"].get("buffer", []),
+                "summary":  state["_resume"].get("summary", ""),
             }
 
     async def _send_user_message_to_llm(self, state: _State):
@@ -228,22 +231,30 @@ class PrototypeAgent:
         prompt = prompt_template.invoke(dict(state))
         response = await self.chat_model.ainvoke(prompt)
 
-        return {
-            # Remove user input from state as we handled it now
-            "user_input": "",
+        if "_hidden" in state and state["_hidden"]:
+            # Hidden user message, will not be logged
+            return {
+                "user_input": "",
+                "_hidden":    False,
+            }
+        else:
+            return {
+                # Remove user input from state as we handled it now
+                "user_input": "",
+                "_hidden":    False,
 
-            # Extend message buffer with question and answer. This will be picked by
-            # the next time by the summary node summarize the conversation into a
-            # single context message
-            #
-            # CAVEAT: Don't save message instances here, as they would automatically
-            # be streamed to the client.
-            "buffer": [
-                *state.get("buffer", []),
-                {"name": "User",   "type": "say",  "text": state["user_input"]},
-                {"name": "Agent",  "type": "say",  "text": response.content},
-            ],
-        }
+                # Extend message buffer with question and answer. This will be picked by
+                # the next time by the summary node summarize the conversation into a
+                # single context message
+                #
+                # CAVEAT: Don't save message instances here, as they would automatically
+                # be streamed to the client.
+                "buffer": [
+                    *state.get("buffer", []),
+                    {"name": "User",   "type": "say",  "text": state["user_input"]},
+                    {"name": "Agent",  "type": "say",  "text": response.content},
+                ],
+            }
     
     async def _summarize_past_conversation(self, state: _State):
         """
@@ -251,12 +262,9 @@ class PrototypeAgent:
         so that when the actual user message is sent to the LLM the summary can be provided as a
         context. We use this strategy because a simple message buffer has shown that the LLM often
         repeats itself by repeating parts of the previous answers with each message.
-        """
-        if not "user_input" in state or not state["user_input"]:
-            return {}
-        
+        """        
         if not state.get("buffer", []):
-            return {"summary": ""}
+            return {}
         
         template = _EXTEND_SUMMARY_PROMPT if state.get("summary", "") else _NEW_SUMMARY_PROMPT
         prompt_template = PromptTemplate(input_variables=["buffer", "summary", "language"], template=template)
@@ -270,30 +278,39 @@ class PrototypeAgent:
         response = await self.chat_model.ainvoke(prompt)
         return {"summary": response.content, "buffer": []}
 
-    async def start_conversation(self):
+    async def start_conversation(self, language: str):
         """
         Reset internal state to start a completely new conversation.
         """
-        await self.app.ainvoke({"_reset": True})
+        await self.invoke_with_new_user_message(
+            text     = "Hi!",
+            language = language,
+            hidden   = True,
+            state    = {
+                "_reset": True,
+            },
+        )
 
     async def resume_conversation(self, conversation: PersistedConversation):
         """
-        Reset internal state continue a previous conversation from an old session.
+        Reset internal state to continue a previous conversation from an old session.
         """
-        await self.app.ainvoke({"_resume": conversation})
+        await self.app.ainvoke(
+            {"_resume": conversation},
+            {"configurable": {"thread_id": conversation["thread_id"]}}
+        )
 
-    async def invoke_with_new_user_message(self, text: str, language: str):
+    async def invoke_with_new_user_message(self, text: str, language: str, hidden: bool = False, state: dict = {}):
         """
         Called from the websocket handler to invoke the graph with another user message.
 
         Parameters:
-            text:                Chat message from the user
-            language:            Language to reply in
-            send_chat_message:   Asynchronous callback to send a chat message to the client
-            send_start_activity: Asynchronous callback to send an activity to the client
+            text:     Chat message from the user
+            language: Language to reply in
+            hidden:   Hidden message that will not be logged
         """
         # Invoke workflow and stream out response
-        reply_id    = uuid.uuid4()
+        reply_id    = str(uuid.uuid4())
         reply_text  = ""
         json_blocks = []
         json_found  = False
@@ -328,7 +345,7 @@ class PrototypeAgent:
                         consume_chunk(remaining_chunk)
 
         async for chunk, metadata in self.app.astream(
-            {"user_input": text, "language": language, "_reset": False},
+            {"user_input": text, "language": language, "_reset": False, "_resume": None, "_hidden": hidden, **state},
             {"configurable": {"thread_id": self.thread_id}},
 
             # CAVEAT 1: This makes the workflow stream out all LLM responses. Only then do we
@@ -363,13 +380,12 @@ class PrototypeAgent:
                 pass
         
         # Send conversation state to the client to be persisted
-        state = await self.app.aget_state({"configurable": {"thread_id": self.thread_id}})
+        state_snapshot = await self.app.aget_state({"configurable": {"thread_id": self.thread_id}})
 
         await self._send_conversation_state({
             "thread_id": self.thread_id,
-            "buffer":    state.values.get("buffer", []),
-            "summary":   state.values.get("summary", ""),
-            "language":  state.values.get("language", ""),
+            "buffer":    state_snapshot.values.get("buffer", []),
+            "summary":   state_snapshot.values.get("summary", ""),
         })
     
     async def generate_feedback_for_activity(self, activity_data: EndActivityData):
@@ -378,7 +394,7 @@ class PrototypeAgent:
         """
         prompt_template = PromptTemplate(input_variables=["questions"], template=_FEEDBACK_PROMPT)
         prompt = prompt_template.invoke({"questions": activity_data["questions"]})
-        await self.invoke_with_new_user_message(str(prompt), activity_data["language"])
+        await self.invoke_with_new_user_message(str(prompt), activity_data["language"], hidden=True)
 
 _SYSTEM_PROMPT="""
 # Procedure

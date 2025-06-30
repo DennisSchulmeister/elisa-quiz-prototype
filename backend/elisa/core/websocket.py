@@ -84,7 +84,6 @@ class ParentWebsocketHandler:
                 print("Client disconnected", flush=True)
                 break
             except Exception as e:
-                print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>")
                 traceback.print_exc()
                 print(flush=True)
 

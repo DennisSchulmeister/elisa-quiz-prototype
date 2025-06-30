@@ -17,16 +17,23 @@ from ..core.typing      import check_type
 from ..core.websocket   import ParentWebsocketHandler
 from ..core.websocket   import WebsocketMessage
 
-class ChatInputMessage(WebsocketMessage):
+class StartConversationMessage(WebsocketMessage):
     """
-    Chat input from the user.
+    Start new conversation and trigger welcome message by LLM.
     """
-    text: str
+    language: str
 
 class ResumeConversationMessage(WebsocketMessage, PersistedConversation):
     """
     Persisted conversation to resume from a previous session.
     """
+
+class ChatInputMessage(WebsocketMessage):
+    """
+    Chat input from the user.
+    """
+    text: str
+    language: str
 
 class EndActivityMessage(WebsocketMessage, EndActivityData):
     """
@@ -58,11 +65,12 @@ class ChatHandler:
             self.chat_agent.set_record_learning_topic(value)
 
     @handle_message("start_conversation")
-    async def handle_start_conversation(self, message: WebsocketMessage):
+    async def handle_start_conversation(self, message: StartConversationMessage):
         """
         Reset conversation state to start a new conversation.
         """
-        await self.chat_agent.start_conversation()
+        check_type(message, StartConversationMessage)
+        await self.chat_agent.start_conversation(message["language"])
 
     @handle_message("resume_conversation")
     async def handle_resume_conversation(self, message: ResumeConversationMessage):
@@ -74,15 +82,15 @@ class ChatHandler:
         """
         await self.chat_agent.resume_conversation(message)
 
-    @handle_message("chat_input")
-    async def handle_chat_input(self, message: ChatInputMessage):
+    @handle_message("chat_message")
+    async def handle_chat_message(self, message: ChatInputMessage):
         """
         Feed chat input from user to the LLM and stream back the response.
         """
         check_type(message, ChatInputMessage)
         
-        text     = message.get("text", "")
-        language = message.get("language", "en")
+        text     = message.get("text")
+        language = message.get("language")
 
         await self.chat_agent.invoke_with_new_user_message(text, language)
     
