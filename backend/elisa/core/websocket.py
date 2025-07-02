@@ -28,7 +28,7 @@ class ParentWebsocketHandler:
     A very minimal websocket handler that allows multiple clients to use the chat
     agent concurrently. Conversation and quizzes are currently not shared. There
     is no multi-player mode, yet. But chat messages are streamed in real-time to
-    the frontend, which in turn renders the quiz game accordingly.
+    the client, which in turn renders the quiz game accordingly.
     """
     handler_classes = []
 
@@ -87,7 +87,7 @@ class ParentWebsocketHandler:
                 traceback.print_exc()
                 print(flush=True)
 
-                await ErrorDatabase.insert_backend_exception(e)
+                await ErrorDatabase.insert_server_exception(e)
                 await self.send_error(str(e))
             
         for handler in self.handlers:
@@ -97,7 +97,7 @@ class ParentWebsocketHandler:
             except Exception as e:
                 traceback.print_exc()
                 print(flush=True)
-                await ErrorDatabase.insert_backend_exception(e)
+                await ErrorDatabase.insert_server_exception(e)
 
     async def send_message(self, code: str, data: typing.Mapping[str, typing.Any] = {}):
         """
@@ -124,4 +124,4 @@ class ParentWebsocketHandler:
             except Exception as e:
                 traceback.print_exc()
                 print(flush=True)
-                await ErrorDatabase.insert_backend_exception(e)
+                await ErrorDatabase.insert_server_exception(e)

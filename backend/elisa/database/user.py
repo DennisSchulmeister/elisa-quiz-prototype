@@ -25,7 +25,7 @@ from ..core.typing                   import check_type
 #     """
 #     _id:           NotRequired[ObjectId]
 #     timestamp:     datetime.datetime
-#     error_type:    Literal["backend", "frontend", "message"]
+#     error_type:    Literal["server", "client", "message"]
 #     error_message: str
 #     stack_trace:   str
 

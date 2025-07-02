@@ -25,13 +25,13 @@ class ErrorEntry(TypedDict):
     """
     _id:           NotRequired[ObjectId]
     timestamp:     datetime.datetime
-    error_type:    Literal["backend", "frontend", "message"]
+    error_type:    Literal["server", "client", "message"]
     error_message: str
     stack_trace:   NotRequired[str]
 
 class BugReport(TypedDict):
     """
-    Manual bug report filled-in within the frontend.
+    Manual bug report filled-in within the client.
     """
     _id:         NotRequired[ObjectId]
     timestamp:   datetime.datetime
@@ -53,7 +53,7 @@ class ErrorDatabase:
     """Manual bug reports"""
 
     @classmethod
-    async def insert_backend_exception(cls, exception: Exception) -> ObjectId:
+    async def insert_server_exception(cls, exception: Exception) -> ObjectId:
         """
         Save the name and stack trace of a python exception.
         """
@@ -62,7 +62,7 @@ class ErrorDatabase:
         
         error = ErrorEntry(
             timestamp     = now(),
-            error_type    = "backend",
+            error_type    = "server",
             error_message = error_message,
             stack_trace   = stack_trace,
         )
@@ -71,13 +71,13 @@ class ErrorDatabase:
         return result.inserted_id
 
     @classmethod
-    async def insert_frontend_exception(cls, error_message: str, stack_trace: str) -> ObjectId:
+    async def insert_client_exception(cls, error_message: str, stack_trace: str) -> ObjectId:
         """
-        Save the name and stack trace of a frontend exception.
+        Save the name and stack trace of a client exception.
         """
         error = ErrorEntry(
             timestamp     = now(),
-            error_type    = "frontend",
+            error_type    = "client",
             error_message = error_message,
             stack_trace   = stack_trace,
         )

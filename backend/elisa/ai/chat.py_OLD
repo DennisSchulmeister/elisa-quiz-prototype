@@ -17,94 +17,10 @@ from langchain_core.prompts      import SystemMessagePromptTemplate
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph             import START
 from langgraph.graph             import StateGraph
-from typing                      import Literal
 from typing                      import NotRequired
-from typing                      import Protocol
 from typing                      import TypedDict
 
 from ..core.typing               import check_type
-
-class ChatMessage(TypedDict):
-    """
-    A single chat message as exchanged between frontend and backend or stored
-    in the message history.
-    """
-    id:   NotRequired[str]
-    name: Literal["User", "Agent", "Summarizer"]
-    type: Literal["say", "think"]
-    text: str
-
-class QuizQuestion(TypedDict):
-    """
-    Question type for the quiz activity.
-    """
-    question:     str
-    answers:      list[str]
-    correct:      int
-    given_answer: NotRequired[str]
-
-class StartQuizActivity(TypedDict):
-    """
-    Quiz activity where each question has a text and several answers of which
-    exactly one is correct.
-    """
-    activity:  Literal["quiz"]
-    subject:   str
-    level:     str
-    questions: list[QuizQuestion]
-
-class EndQuizActivity(TypedDict):
-    """
-    Request for LLM feedback at the end of a quiz activity. The questions list
-    must contain the given answers as a string (not index).
-    """
-    questions: list[QuizQuestion]
-    language:  str
-
-StartActivityData = StartQuizActivity #|OtherActivity|YetAnotherActivity
-"""Data to start a new activity"""
-
-EndActivityData = EndQuizActivity
-"""Received data at the end of an activity"""
-
-class SendChatMessageCallback(Protocol):
-    """
-    Callback function that sends a chat message to the client.
-    """
-    async def __call__(self, message: ChatMessage): ...
-
-class SendStartActivityCallback(Protocol):
-    """
-    Callback function that sends an interactive activity to the client.
-    """
-    async def __call__(self, data: StartActivityData): ...
-
-class SendConversationStateCallback(Protocol):
-    """
-    Callback function that sends the conversation state to the client to
-    be persisted.
-    """
-    async def __call__(self, data: "PersistedConversation"): ...
-
-class PersistedConversation(TypedDict):
-    """
-    A whole conversation thread persisted to resume the conversation later
-    with a new client connection. Basically contains all non-transient fields
-    of the workflow state and the thread id.
-
-    Note, that the frontend already has the full message history. Therefor it
-    is neither recorded server-side nor sent back to the client. To fully restore
-    a previous conversation the client must restore the message history plus the
-    state received here. The latter must be sent to the backend.
-    """
-    thread_id: str
-    """Thread id to distinguish conversations"""
-
-    buffer: list[ChatMessage]
-    """Past messages not yet contained in the summary."""
-
-    summary: str
-    """Constantly updated summary of the past conversation"""
 
 class _State(TypedDict):
     """
@@ -131,27 +47,19 @@ class _State(TypedDict):
     user_input: str
     """Currently processed user input message"""
 
-class PrototypeAgent:
+class ChatAgent:
     """
     Very first prototype built with LangChain and LangGraph. Implements a very
     simple agent that asks the user which topic to learn, answers questions and
     creates simple quizzes.
     """
-    def __init__(
-        self,
-        send_chat_message:       SendChatMessageCallback,
-        send_start_activity:     SendStartActivityCallback,
-        send_conversation_state: SendConversationStateCallback,
-    ):
+    def __init__(self, callback: ChatAgentCallbackABC):
         """
         Parameters:
-            send_chat_message:   Asynchronous callback to send a chat message to the client
-            send_start_activity: Asynchronous callback to send an activity to the client
+            callback: Websocket handler with callbacks to send messages to the client
         """
         # Remember callbacks
-        self._send_chat_message       = send_chat_message
-        self._send_start_activity     = send_start_activity
-        self._send_conversation_state = send_conversation_state
+        self._callback = callback
 
         # Thread id to distinguish conversations
         self.thread_id = str(uuid.uuid4())
@@ -282,7 +190,7 @@ class PrototypeAgent:
         """
         Reset internal state to start a completely new conversation.
         """
-        await self.invoke_with_new_user_message(
+        await self.process_chat_message(
             text     = "Hi!",
             language = language,
             hidden   = True,
@@ -300,7 +208,7 @@ class PrototypeAgent:
             {"configurable": {"thread_id": conversation["thread_id"]}}
         )
 
-    async def invoke_with_new_user_message(self, text: str, language: str, hidden: bool = False, state: dict = {}):
+    async def process_chat_message(self, text: str, language: str, hidden: bool = False, state: dict = {}):
         """
         Called from the websocket handler to invoke the graph with another user message.
 
@@ -351,7 +259,7 @@ class PrototypeAgent:
             # CAVEAT 1: This makes the workflow stream out all LLM responses. Only then do we
             # get a chunk object and metadata dict. But we need to skip all chunks from LLM
             # calls in intermediate nodes, since we only want to send back the result of the
-            # final LLM call to the frontend.
+            # final LLM call to the client.
             #
             # CAVEAT 2: All Message instances in the state will automatically be streamed
             # out to the client (as a diff, meaning all messages that haven't been sent already).
@@ -362,7 +270,7 @@ class PrototypeAgent:
             and metadata["langgraph_node"] == "send_user_message_to_llm": # type: ignore
                 consume_chunk(chunk.content) # type: ignore
 
-                await self._send_chat_message(ChatMessage(
+                await self._callback.send_chat_message(ChatMessage(
                     id   = reply_id,
                     name = "Agent",
                     type = "say",
@@ -374,7 +282,7 @@ class PrototypeAgent:
             try:
                 quiz_activity = json.loads(json_block)
                 check_type(quiz_activity, StartActivityData)
-                await self._send_start_activity(quiz_activity)
+                await self._callback.send_start_activity(quiz_activity)
             except TypeError:
                 # Ignore: LLM didn't create the correct JSON structure
                 pass
@@ -382,19 +290,21 @@ class PrototypeAgent:
         # Send conversation state to the client to be persisted
         state_snapshot = await self.app.aget_state({"configurable": {"thread_id": self.thread_id}})
 
-        await self._send_conversation_state({
+        await self._callback.send_conversation_state({
             "thread_id": self.thread_id,
             "buffer":    state_snapshot.values.get("buffer", []),
             "summary":   state_snapshot.values.get("summary", ""),
         })
     
-    async def generate_feedback_for_activity(self, activity_data: EndActivityData):
+    async def process_activity_update(self, data: UpdateActivityData):
         """
-        Request for LLM feedback at the end of a quiz activity.
+        Respond to updated internal state of an activity sent by the client.
+        In this prototype there is only one change that the client can do:
+        To end a quiz and request feedback.
         """
         prompt_template = PromptTemplate(input_variables=["questions"], template=_FEEDBACK_PROMPT)
-        prompt = prompt_template.invoke({"questions": activity_data["questions"]})
-        await self.invoke_with_new_user_message(str(prompt), activity_data["language"], hidden=True)
+        prompt = prompt_template.invoke({"questions": data["questions"]})
+        await self.process_chat_message(str(prompt), data["language"], hidden=True)
 
 _SYSTEM_PROMPT="""
 # Procedure

@@ -15,16 +15,16 @@ from ..core.websocket  import ParentWebsocketHandler
 from ..core.websocket  import WebsocketMessage
 from ..database.error  import ErrorDatabase
 
-class FrontendErrorMessage(WebsocketMessage):
+class ClientErrorMessage(WebsocketMessage):
     """
-    Error or exception raised in the frontend code.
+    Error or exception raised in the client code.
     """
     error_message: str
     stack_trace:   typing.NotRequired[str]
 
 class BugReportMessage(WebsocketMessage):
     """
-    Manual bug report filled-in within the frontend.
+    Manual bug report filled-in within the client.
     """
     description: str
     contact:     str
@@ -41,13 +41,13 @@ class ErrorHandler:
         self.parent = parent
     
     @handle_message("error")
-    async def handle_error(self, message: FrontendErrorMessage):
+    async def handle_error(self, message: ClientErrorMessage):
         """
-        Save error received from frontend.
+        Save error received from client.
         """
-        check_type(message, FrontendErrorMessage)
+        check_type(message, ClientErrorMessage)
         
-        await ErrorDatabase.insert_frontend_exception(
+        await ErrorDatabase.insert_client_exception(
             error_message = message["error_message"],
             stack_trace   = message.get("stack_trace", "")
         )
@@ -55,7 +55,7 @@ class ErrorHandler:
     @handle_message("bug_report")
     async def handle_bug_report(self, message: BugReportMessage):
         """
-        Save manual bug report received from frontend.
+        Save manual bug report received from client.
         """
         check_type(message, BugReportMessage)
 
