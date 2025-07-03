@@ -31,3 +31,7 @@ db.usage_times.createIndex({ duration_seconds: 1 });
 db = db.getSiblingDB("analytics");
 db.learning_topics.createIndex({ keyword: 1 });
 db.learning_topics.createIndex({ count: 1 });
+
+// --- user.chat_history
+db = db.getSiblingDB("user")
+db.chat_history.createIndex({ username: 1, long_term: { thread_id: 1 }});

@@ -106,10 +106,10 @@ class ShortTermMemory(BaseModel):
     summary. This bounds the context window for the LLM and simulates the memory
     of must humans, who also only remember the details of the most recent events.
     """
-    recent_messages: List[ChatMessage]
+    messages: List[ChatMessage]
     """The most recent chat messages"""
 
-    previous_messages: str
+    previous: str
     """Fading summary of all older messages"""
 
 class LongTermMemory(BaseModel):
@@ -139,5 +139,5 @@ class MemoryTransaction(BaseModel):
     short_term_n: int
     """Number of recent messages to keep in the short-term memory"""
 
-    previous_messages: str
+    previous: str
     """Updated short-term summary of the older messages"""
