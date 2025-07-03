@@ -16,6 +16,7 @@ from .websocket.analytics.handler  import AnalyticsHandler
 from .websocket.chat.handler       import ChatHandler
 from .websocket.connection.handler import ConnectionHandler
 from .websocket.error.handler      import ErrorHandler
+from .websocket.user.handler       import UserHandler
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -26,6 +27,7 @@ async def lifespan(app: FastAPI):
     ParentWebsocketHandler.add_handler(ChatHandler)
     ParentWebsocketHandler.add_handler(ConnectionHandler)
     ParentWebsocketHandler.add_handler(ErrorHandler)
+    ParentWebsocketHandler.add_handler(UserHandler)
 
     # Now start handling requests
     yield

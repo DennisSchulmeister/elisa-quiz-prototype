@@ -1,0 +1,87 @@
+# Elisa: AI Learning Assistant
+# © 2025 Dennis Schulmeister-Zimolong <dennis@wpvs.de>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+
+from ...auth.user           import User
+from ...database.user.db    import UserDatabase
+from ...database.user.types import Chat
+from ..decorators           import handle_message
+from ..decorators           import websocket_handler
+from ..parent               import ParentWebsocketHandler
+from .types                 import ChatKey
+from .types                 import RenameChat
+from .types                 import SaveChat
+
+@websocket_handler
+class UserHandler:
+    """
+    Websocket message handler for user data management.
+    """
+    def __init__(self, parent: ParentWebsocketHandler):
+        """
+        Initialize client-bound handler instance.
+        """
+        self.parent = parent
+    
+    @handle_message("get_chats", require_auth=True)
+    async def handle_get_chats(self, user: User):
+        """
+        Read an overview list of all saved chat conversations of the user.
+        """
+        chats = await UserDatabase.get_chats(username=user.subject)
+        await self.parent.send_message("get_chats_reply", {"chats": chats})
+    
+    @handle_message("get_chat", ChatKey, require_auth=True)
+    async def handle_get_chat(self, key: ChatKey, user: User):
+        """
+        Get a single chat conversation with full data.
+        """
+        chat = await UserDatabase.get_chat(
+            username  = user.subject,
+            thread_id = key.thread_id,
+        )
+
+        if not chat:
+            await self.parent.send_message("get_chat_reply")
+        else:
+            await self.parent.send_message("get_chat_reply", chat.model_dump())
+    
+    @handle_message("rename_chat", RenameChat, require_auth=True)
+    async def handle_rename_chat(self, rename: RenameChat, user: User):
+        """
+        Change title of a chat conversation.
+        """
+        await UserDatabase.rename_chat(
+            username  = user.subject,
+            thread_id = rename.thread_id,
+            title     = rename.title,
+        )
+
+    @handle_message("save_chat", SaveChat, require_auth=True)
+    async def handle_save_chat(self, chat: SaveChat, user: User):
+        """
+        Save a previously client-persisted chat conversation on the server.
+        The client must delete the chat in the local storage afterwards to
+        avoid data inconsistencies. Not meant make single changes to a chat,
+        because always the full history is transferred and saved.
+        """
+        _chat = Chat.model_validate({
+            "username": user.subject,
+            **chat.model_dump(),
+        })
+
+        await UserDatabase.save_chat(_chat)
+
+    @handle_message("delete_chat", ChatKey, require_auth=True)
+    async def handle_delete_chat(self, key: ChatKey, user: User):
+        """
+        Delete a chat conversation.
+        """
+        await UserDatabase.delete_chat(
+            username  = user.subject,
+            thread_id = key.thread_id,
+        )

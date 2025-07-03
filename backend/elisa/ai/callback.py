@@ -20,7 +20,7 @@ class ChatAgentCallback(ABC):
     the websocket handler class owning the chat agent.
     """
     @abstractmethod
-    async def send_agent_chat_message(self, message: AgentChatMessage):
+    async def send_agent_chat_message(self, msg: AgentChatMessage):
         """
         Send an agent chat message to the client.
         """
@@ -36,5 +36,5 @@ class ChatAgentCallback(ABC):
     @abstractmethod
     async def send_activity_transaction(self, tx: ActivityTransaction):
         """
-        Update content or state of an activity.
+        Send activity update to the client after modification by the agent.
         """

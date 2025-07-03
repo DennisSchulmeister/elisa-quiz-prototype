@@ -14,15 +14,24 @@ from pydantic    import BaseModel
 from ...ai.types import LongTermMemory
 from ...ai.types import ShortTermMemory
 
-class ChatHistory(BaseModel):
+class Chat(BaseModel):
     """
     Chat conversation threads persisted on the server. This is just the combined
     long-term memory (full message history) and short-term memory (context memory)
     of a chat conversation.
     """
     _id:        ObjectId | None = None
-    timestamp:  datetime.datetime
     username:   str
+    timestamp:  datetime.datetime
+    title:      str
     encrypt:    bool
     long_term:  LongTermMemory
     short_term: ShortTermMemory
+
+class ChatShort(BaseModel):
+    """
+    Reduced dataset for getting a list of all saved chat conversations of the user.
+    """
+    timestamp: datetime.datetime
+    thread_id: str
+    title:     str

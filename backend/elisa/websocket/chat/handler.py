@@ -7,14 +7,17 @@
 # License, or (at your option) any later version.
 
 from ...ai.activity.types import ActivityTransaction
+from ...ai.types          import StartChat
 from ...ai.callback       import ChatAgentCallback
 from ...ai.chat           import ChatAgent
 from ...ai.types          import AgentChatMessage
 from ...ai.types          import MemoryTransaction
 from ...ai.types          import UserChatMessage
+from ...auth.user         import User
 from ..decorators         import handle_message
 from ..decorators         import websocket_handler
 from ..parent             import ParentWebsocketHandler
+from .types               import ChangeLanguage
 
 @websocket_handler
 class ChatHandler(ChatAgentCallback):
@@ -36,32 +39,43 @@ class ChatHandler(ChatAgentCallback):
         if key == "record_learning_topics":
             self.chat_agent.set_record_learning_topic(value)
 
-    @handle_message("start_chat", None)
-    async def handle_start_chat(self, message, **kwargs):
+    @handle_message("start_chat", StartChat)
+    async def handle_start_chat(self, chat: StartChat, user: User, **kwargs):
         """
+        Start new chat conversation or resume previous conversation. To resume an
+        old conversation, the client sends its thread id. If the chat history is
+        saved on the client, it also sends the short-term memory. Otherwise it is
+        assumed, that the history is saved by the server.
         """
-
-    @handle_message("resume_chat", None)
-    async def handle_resume_chat(self, message, **kwargs):
-        """
-        """
+        await self.chat_agent.start_chat(chat, user)
 
     @handle_message("user_chat_message", UserChatMessage)
-    async def handle_user_chat_message(self, message: UserChatMessage, **kwargs):
+    async def handle_user_chat_message(self, msg: UserChatMessage, user: User, **kwargs):
         """
+        Process chat message sent by the user.
         """
+        await self.chat_agent.process_chat_message(msg, user)
     
     @handle_message("activity_transaction", ActivityTransaction)
-    async def handle_activity_transaction(self, tx: ActivityTransaction, **kwargs):
+    async def handle_activity_transaction(self, tx: ActivityTransaction, user: User, **kwargs):
         """
+        Handle activity update after modification by the client.
         """
+        await self.chat_agent.apply_activity_transaction(tx, user)
+    
+    @handle_message("change_language", ChangeLanguage)
+    async def handle_change_language(self, change: ChangeLanguage, **kwargs):
+        """
+        Remember new language for AI generated chat messages.
+        """
+        self.chat_agent.set_language(change.language)
 
     #@override
-    async def send_agent_chat_message(self, message: AgentChatMessage, **kwargs):
+    async def send_agent_chat_message(self, msg: AgentChatMessage, **kwargs):
         """
         Send an agent chat message to the client.
         """
-        await self.parent.send_message("agent_chat_message", message.model_dump())
+        await self.parent.send_message("agent_chat_message", msg.model_dump())
     
     #@override
     async def send_memory_transaction(self, tx: MemoryTransaction, **kwargs):
@@ -74,47 +88,6 @@ class ChatHandler(ChatAgentCallback):
     #@override
     async def send_activity_transaction(self, tx: ActivityTransaction, **kwargs):
         """
-        Send activity update to the client, when it was modified by the agent.
+        Send activity update to the client after modification by the agent.
         """
         await self.parent.send_message("activity_transaction", tx.model_dump())
-
-
-#     @handle_message("start_conversation")
-#     async def handle_start_conversation(self, message: StartConversationMessage):
-#         """
-#         Reset conversation state to start a new conversation.
-#         """
-#         check_type(message, StartConversationMessage)
-#         await self.chat_agent.start_conversation(message["language"])
-# 
-#     @handle_message("resume_conversation")
-#     async def handle_resume_conversation(self, message: ResumeConversationMessage):
-#         """
-#         Resume previous conversation based on the received conversation state.
-#         Currently, conversations can only be resumed when they are persisted
-#         by the client and in a new session sent to the server with this message,
-#         as we don't yet have server-side chat persistence.
-#         """
-#         await self.chat_agent.resume_conversation(message)
-# 
-#     @handle_message("chat_message")
-#     async def handle_chat_message(self, message: ChatInputMessage):
-#         """
-#         Feed chat input from user to the LLM and stream back the response.
-#         """
-#         check_type(message, ChatInputMessage)
-#         
-#         text     = message.get("text")
-#         language = message.get("language")
-# 
-#         await self.chat_agent.process_chat_message(text, language)
-#     
-#     @handle_message("update_activity")
-#     async def handle_update_activity(self, message: UpdateActivityMessage):
-#         """
-#         Receive new data for a currently running activity. This message is sent by
-#         the client for activities, where the internal state of the activity is
-#         mutated by the client usually due to a user interaction. But also the
-#         server can mutate the internal state and send a similar message.
-#         """
-#         await self.chat_agent.process_activity_update(message)

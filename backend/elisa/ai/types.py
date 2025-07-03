@@ -133,6 +133,9 @@ class MemoryTransaction(BaseModel):
     thread_id: str
     """Thread id to distinguish conversations"""
 
+    title: str = ""
+    """Chat title"""
+
     new_messages: List[ChatMessage]
     """New messages"""
 
@@ -141,3 +144,22 @@ class MemoryTransaction(BaseModel):
 
     previous: str
     """Updated short-term summary of the older messages"""
+
+class StartChat(BaseModel):
+    """
+    Start new chat conversation or resume previous conversation based
+    on its persisted short-term memory.
+    """
+
+    language: str
+    """Current user interface language"""
+
+    thread_id: str = ""
+    """Thread id of previous chat"""
+
+    short_term: ShortTermMemory | None = None
+    """
+    Short-term memory of previous chat, when persisted on the client. When a
+    thread id is received but no short-term memory, the memory is assumed to
+    be persisted by the server.
+    """

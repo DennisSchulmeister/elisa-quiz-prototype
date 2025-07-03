@@ -25,7 +25,7 @@ class ErrorHandler:
         """
         self.parent = parent
     
-    @handle_message("error")
+    @handle_message("error", ClientErrorMessage)
     async def handle_error(self, message: ClientErrorMessage, **kwargs):
         """
         Save error received from client.
@@ -35,7 +35,7 @@ class ErrorHandler:
             stack_trace   = message.stack_trace
         )
     
-    @handle_message("bug_report")
+    @handle_message("bug_report", BugReportMessage)
     async def handle_bug_report(self, message: BugReportMessage, user: User, **kwargs):
         """
         Save manual bug report received from client.

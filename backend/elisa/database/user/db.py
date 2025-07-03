@@ -7,12 +7,14 @@
 # License, or (at your option) any later version.
 
 from bson                            import ObjectId
+from pydantic                        import ValidationError
 from pymongo.asynchronous.collection import AsyncCollection
 
 from ...ai.types                     import MemoryTransaction
 from ...database.utils               import now
 from ..utils                         import mongo_client
-from .types                          import ChatHistory
+from .types                          import Chat
+from .types                          import ChatShort
 
 class UserDatabase:
     """
@@ -21,11 +23,38 @@ class UserDatabase:
     db = mongo_client.user
     """Mongo database instance"""
 
-    chat_history: AsyncCollection = mongo_client.user.chat_history
+    chats: AsyncCollection = mongo_client.user.chats
     """Anonymous user feedback via the built-in survey form."""
 
     @classmethod
-    async def get_chat_history(cls, username: str, thread_id: str) -> ChatHistory | None:
+    async def get_chats(cls, username: str) -> list[ChatShort]:
+        """
+        Read an overview list of all saved chat conversations of the user. Only returns
+        the key values and the title of each chat.
+        """
+        result = []
+
+        async for chat_doc in cls.chats.find(
+            filter = {
+                "username": username,
+            },
+            projection = ["_id", "timestamp", "title", "long_term.thread_id"],
+        ):
+            try:
+                chat = ChatShort(
+                    timestamp = chat_doc["timestamp"],
+                    thread_id = chat_doc["long_term"]["thread_id"],
+                    title     = chat_doc["title"]
+                )
+
+                result.append(ChatShort.model_validate(chat))
+            except (KeyError, ValidationError):
+                pass
+
+        return result
+
+    @classmethod
+    async def get_chat(cls, username: str, thread_id: str) -> Chat | None:
         """
         Read persisted chat history of an old conversation. Either returns the found
         database entry (containing the short-term and long-term memory) or `None`, if
@@ -33,13 +62,80 @@ class UserDatabase:
 
         Note: This version does not yet support encryption!
         """
-        return await cls.chat_history.find_one({
+        chat = await cls.chats.find_one({
             "username": username,
             "long_term": {
                 "thread_id": thread_id
             }
         })
 
+        try:
+            return Chat.model_validate(chat)
+        except ValidationError:
+            return None
+
+    @classmethod
+    async def rename_chat(cls, username: str, thread_id: str, title: str):
+        """
+        Change title of a chat conversation.
+        """
+        await cls.chats.update_one({
+            "username": username,
+            "long_term": {
+                "thread_id": thread_id,
+            }
+        }, {
+            "title": title,
+        });
+
+    @classmethod
+    async def save_chat(cls, chat: Chat):
+        """
+        Save a full chat entry, usually because it was previously persisted on the client,
+        but shall now be managed by the server.
+        """
+        object_id = await cls.chats.find_one(
+            filter = {
+                "username": chat.username,
+                "long_term": {
+                    "thread_id": chat.long_term.thread_id
+                }
+
+            },
+            projection = ["_id"],
+        )
+
+        if not object_id:
+            await cls.chats.insert_one({
+                "username":   chat.username,
+                "timestamp":  chat.timestamp,
+                "title":      chat.title,
+                "encrypt":    chat.encrypt,
+                "long_term":  chat.long_term,
+                "short_term": chat.short_term,
+            })
+        else:
+            await cls.chats.update_one({"_id": object_id}, {
+                "username":   chat.username,
+                "timestamp":  chat.timestamp,
+                "title":      chat.title,
+                "encrypt":    chat.encrypt,
+                "long_term":  chat.long_term,
+                "short_term": chat.short_term,
+            })
+
+    @classmethod
+    async def delete_chat(cls, username: str, thread_id: str):
+        """
+        Delete chat history of an old conversation, if it exists.
+        """
+        await cls.chats.delete_one({
+            "username": username,
+            "long_term": {
+                "thread_id": thread_id
+            }
+        })
+    
     @classmethod
     async def apply_memory_transaction(cls, username: str, tx: MemoryTransaction) -> ObjectId:
         """
@@ -48,7 +144,7 @@ class UserDatabase:
 
         Note: This version does not yet support encryption!
         """
-        object_id = await cls.chat_history.find_one(
+        object_id = await cls.chats.find_one(
             filter = {
                 "username": username,
                 "long_term": {
@@ -59,9 +155,10 @@ class UserDatabase:
         )
 
         if not object_id:
-            object_id = (await cls.chat_history.insert_one({
-                "timestamp": now(),
+            object_id = (await cls.chats.insert_one({
                 "username":  username,
+                "timestamp": now(),
+                "title":     tx.title,
                 "encrypt":   False,
                 "long_term": {
                     "thread_id": tx.thread_id,
@@ -73,9 +170,10 @@ class UserDatabase:
                 },
             })).inserted_id
         else:
-            await cls.chat_history.update_one({"_id": object_id}, {
+            await cls.chats.update_one({"_id": object_id}, {
                 "$set": {
                     "timestamp": now(),
+                    "title": tx.title,
                     "short_term.previous": tx.previous,
                 },
                 "$push": {

@@ -29,26 +29,26 @@ class AnalyticsHandler:
         self.parent = parent
         self.usage_time_id: ObjectId|None = None
     
-    @handle_message("user_feedback")
+    @handle_message("user_feedback", UserFeedbackData)
     async def handle_user_feedback(self, message: UserFeedbackData, user: User, **kwargs):
         """
         Save received anonymous user feedback.
         """
         await AnalyticsDatabase.insert_user_feedback(message, user)
     
-    @handle_message("privacy_settings")
-    async def handle_privacy_settings(self, message: PrivacySettingsMessage, **kwargs):
+    @handle_message("privacy_settings", PrivacySettingsMessage)
+    async def handle_privacy_settings(self, privacy: PrivacySettingsMessage, **kwargs):
         """
         Receive privacy settings from client and start recording the application
         usage time, if the user allows. If the consent is revoked, the usage time
         record will be deleted again.
         """
-        await self.parent.notify_handlers("record_learning_topics", message.record_learning_topics)
+        await self.parent.notify_handlers("record_learning_topics", privacy.record_learning_topics)
         
-        if message.record_usage_time and not self.usage_time_id:
+        if privacy.record_usage_time and not self.usage_time_id:
             # Start recording the usage time
             self.usage_time_id = await AnalyticsDatabase.save_usage_start()
-        elif not message.record_usage_time and self.usage_time_id:
+        elif not privacy.record_usage_time and self.usage_time_id:
             # Delete started recording as the user revoked the consent
             await AnalyticsDatabase.delete_usage_time(self.usage_time_id)
             self.usage_time_id = None
