@@ -56,15 +56,21 @@ services:
       # Unless of course, you run the web server externally.
       #- "8000:8000"
     environment:
-      # Insert your API key here!
-      UVICORN_HOST:       0.0.0.0
-      LLM_CHAT_MODEL:     chatgpt-4o-latest
-      LLM_MODEL_PROVIDER: openai
-      OPENAI_API_KEY:     sk-...
-      MONGODB_URL:        mongodb://mongo:mongo@localhost:27071/?compressors=zstandard,zlib,snappy
-      # Usually the below values don't need to be changed.
-      #UVICORN_PORT:   8000
-      #UVICORN_RELOAD: false
+      ELISA_LISTEN_IP:        0.0.0.0
+      ELISA_LISTEN_PORT:      8000
+      ELISA_MONGODB_URL:      mongodb://mongo:mongo@localhost:27071/?compressors=zstandard,zlib,snappy
+      ELISA_LLM_CHAT_MODEL:   chatgpt-4o-latest
+      ELISA_LLM_API_KEY:      sk-...
+      #ELISA_LLM_BASE_URL:    ...
+      #ELISA_OIDC_JWKS_URL:   ...
+      #ELISA_OIDC_PUBLIC_KEY: ...
+      #ELISA_OIDC_ALGORITHMS: RS256
+      #ELISA_OIDC_CLIENT_ID:  ...
+      #ELISA_OIDC_ISSUER:     ...
+      #ELISA_AUTH_SUBJECT:    ...
+      #ELISA_AUTH_SCOPES:     chat_history
+    #volumes:
+    #  - ./backend/_local:/app/_local
     depends_on:
       mongodb:
         condition: service_healthy

@@ -6,13 +6,14 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from typing           import Literal
-from typing           import TypedDict
+from pydantic        import BaseModel
+from typing          import Literal
+from typing          import List
 
 from .activity.types import ActivityData
 from .activity.types import ActivityStatus
 
-class SpeakMessageContent(TypedDict):
+class SpeakMessageContent(BaseModel):
     """
     Spoken message content for a plain and simple chat message.
     """
@@ -22,7 +23,7 @@ class SpeakMessageContent(TypedDict):
     speak: str
     """Message text"""
 
-class ThinkMessageContent(TypedDict):
+class ThinkMessageContent(BaseModel):
     """
     A single thought or reasoning step.
     """
@@ -32,7 +33,7 @@ class ThinkMessageContent(TypedDict):
     think: str
     """Message text"""
 
-class ProcessStep(TypedDict):
+class ProcessStep(BaseModel):
     """
     A single process step in a sequential background process.
     """
@@ -42,17 +43,17 @@ class ProcessStep(TypedDict):
     status: Literal["planned", "running", "finished", "aborted"]
     """Current status"""
 
-class ProcessMessageContent(TypedDict):
+class ProcessMessageContent(BaseModel):
     """
     Progress of a sequential background process.
     """
     type: Literal["process"]
     """Content type (Sequential process progress)"""
 
-    steps: list[ProcessStep]
+    steps: List[ProcessStep]
     """Status of each individual step"""
 
-class ActivityMessageContent(TypedDict):
+class ActivityMessageContent(BaseModel):
     """
     An interactive activity with custom content and custom UI, e.g. a quiz game.
     """
@@ -68,7 +69,7 @@ class ActivityMessageContent(TypedDict):
     data: ActivityData
     """Shared data with the content and state of the activity"""
 
-class UserChatMessage(TypedDict):
+class UserChatMessage(BaseModel):
     """
     A single chat message sent from the user to the agent.
     """
@@ -78,7 +79,7 @@ class UserChatMessage(TypedDict):
     content: SpeakMessageContent
     """Message content"""
 
-class AgentChatMessage(TypedDict):
+class AgentChatMessage(BaseModel):
     """
     A single chat message as sent from the agent to the user.
     """
@@ -94,7 +95,7 @@ class AgentChatMessage(TypedDict):
 ChatMessage = UserChatMessage | AgentChatMessage
 """User or agent chat message"""
 
-class ShortTermMemory(TypedDict):
+class ShortTermMemory(BaseModel):
     """
     Short-term conversation memory that provides context to the LLM about the
     previously exchanged chat messages.
@@ -105,13 +106,13 @@ class ShortTermMemory(TypedDict):
     summary. This bounds the context window for the LLM and simulates the memory
     of must humans, who also only remember the details of the most recent events.
     """
-    recent_messages: list[ChatMessage]
+    recent_messages: List[ChatMessage]
     """The most recent chat messages"""
 
     previous_messages: str
     """Fading summary of all older messages"""
 
-class LongTermMemory(TypedDict):
+class LongTermMemory(BaseModel):
     """
     Long-term conversation memory that persists the full details of a conversation
     thread. Unlike real humans all details are remembered, but only to be able to
@@ -121,10 +122,10 @@ class LongTermMemory(TypedDict):
     thread_id: str
     """Thread id to distinguish conversations"""
 
-    messages: list[ChatMessage]
+    messages: List[ChatMessage]
     """Full chat message list"""
 
-class MemoryTransaction(TypedDict):
+class MemoryTransaction(BaseModel):
     """
     An update to the long-term and short-term conversation memory sent by the agent
     to the persistence layer to update the persisted memory accordingly.
@@ -132,7 +133,7 @@ class MemoryTransaction(TypedDict):
     thread_id: str
     """Thread id to distinguish conversations"""
 
-    new_messages: list[ChatMessage]
+    new_messages: List[ChatMessage]
     """New messages"""
 
     short_term_n: int

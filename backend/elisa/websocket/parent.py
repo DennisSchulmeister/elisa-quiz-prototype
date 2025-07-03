@@ -6,22 +6,20 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-import json, traceback, typing
+import traceback
 
-from asyncio.exceptions import CancelledError
-from fastapi            import WebSocket
-from fastapi            import WebSocketDisconnect
+from asyncio.exceptions  import CancelledError
+from fastapi             import WebSocket
+from fastapi             import WebSocketDisconnect
+from typing              import Any
+from typing              import Mapping
+from typing              import Type
 
-from ..core.typing      import check_type
-from ..database.error   import ErrorDatabase
-
-class WebsocketMessage(typing.TypedDict, total=False):
-    """
-    Base type for all messages exchanged via the websocket. The only convention is
-    that it contains a string code with the message type. Depending on the code other
-    keys will be present.
-    """
-    code: str
+from ..auth.exceptions   import AuthenticationRequired
+from ..auth.exceptions   import PermissionDenied
+from ..auth.user         import User
+from ..database.error.db import ErrorDatabase
+from .types              import WebsocketMessage
 
 class ParentWebsocketHandler:
     """
@@ -33,10 +31,10 @@ class ParentWebsocketHandler:
     handler_classes = []
 
     @classmethod
-    def add_handler(cls, handler: typing.Type[typing.Any]):
+    def add_handler(cls, handler: Type[Any]):
         """
         To be called at server startup to register all message handler classes.
-        The classes must have been annotated with `@websocket_handler` and user
+        The classes must have been annotated with `@websocket_handler` and use
         the `@handle_message` decorator to annotate methods for each websocket
         message type.
         """
@@ -50,7 +48,7 @@ class ParentWebsocketHandler:
         Initialize client-bound handler instance.
         """
         self.websocket = websocket
-        self.handlers  = [handler(parent=self) for handler in self.__class__.handler_classes]
+        self.handler_objects = [cls(parent=self) for cls in self.__class__.handler_classes]
 
     async def run(self):
         """
@@ -62,19 +60,30 @@ class ParentWebsocketHandler:
         while True:
             try:
                 handled = False
-                message = json.loads(await self.websocket.receive_text())
+                message = WebsocketMessage.model_validate_json(await self.websocket.receive_text())
+                user    = User(message.jwt)
 
-                check_type(message, WebsocketMessage)
-                
-                for handler in self.handlers:
-                    if message["code"] in handler._message_handlers:
+                for handler_object in self.handler_objects:
+                    if message.code in handler_object._message_handlers:
                         handled = True
 
-                        for func in handler._message_handlers[message["code"]]:
-                            await func(handler, message)
+                        for func in handler_object._message_handlers[message.code]:
+                            # Check authentication and authorization
+                            if func._websocket["require_auth"] and not user.logged_in:
+                                raise AuthenticationRequired()
+                            
+                            if func._websocket["require_scope"] and not func._websocket["require_scope"] in user.scopes:
+                                raise PermissionDenied()
+
+                            # Call handler method
+                            if not func._websocket["message_type"]:
+                                await func(handler_object, user=user)
+                            else:
+                                handler_message = func._websocket["message_type"].model_validate(message.body)
+                                await func(handler_object, handler_message, user=user)
                 
                 if not handled:
-                    error_text = f"Unknown message code: {message["code"]}"
+                    error_text = f"Unknown message code: {message.code}"
                     await ErrorDatabase.insert_error_message(error_text)
                     await self.send_error(error_text)
             except (CancelledError, KeyboardInterrupt):
@@ -90,16 +99,16 @@ class ParentWebsocketHandler:
                 await ErrorDatabase.insert_server_exception(e)
                 await self.send_error(str(e))
             
-        for handler in self.handlers:
+        for handler_object in self.handler_objects:
             try:
-                if hasattr(handler, "on_connection_closed"):
-                    await handler.on_connection_closed()
+                if hasattr(handler_object, "on_connection_closed"):
+                    await handler_object.on_connection_closed()
             except Exception as e:
                 traceback.print_exc()
                 print(flush=True)
                 await ErrorDatabase.insert_server_exception(e)
 
-    async def send_message(self, code: str, data: typing.Mapping[str, typing.Any] = {}):
+    async def send_message(self, code: str, data: Mapping[str, Any] = {}):
         """
         Send a message to the client.
         """
@@ -117,7 +126,7 @@ class ParentWebsocketHandler:
         to decouple the handlers and still pass data like the updated privacy settings
         once they were received.
         """
-        for handler in self.handlers:
+        for handler in self.handler_objects:
             try:
                 if hasattr(handler, "notify"):
                     await handler.notify(key, value)

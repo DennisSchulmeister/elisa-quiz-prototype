@@ -13,7 +13,7 @@ from .activity.types import ActivityTransaction
 from .types          import AgentChatMessage
 from .types          import MemoryTransaction
 
-class ChatAgentCallbackABC(ABC):
+class ChatAgentCallback(ABC):
     """
     Mixin class that defines several callback functions to be called by the chat
     agent in order to send messages back to the client. Must be implemented by
@@ -34,7 +34,7 @@ class ChatAgentCallbackABC(ABC):
         """
     
     @abstractmethod
-    async def send_activity_transaction(self, data: ActivityTransaction):
+    async def send_activity_transaction(self, tx: ActivityTransaction):
         """
         Update content or state of an activity.
         """

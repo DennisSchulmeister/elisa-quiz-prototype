@@ -6,9 +6,9 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from typing import TypedDict
+from pydantic import BaseModel
 
-class QuizQuestion(TypedDict):
+class QuizQuestion(BaseModel):
     """
     Question type for the quiz activity.
     """
@@ -21,7 +21,7 @@ class QuizQuestion(TypedDict):
     correct: int
     """Index of correct answer"""
 
-class QuizActivity(TypedDict):
+class QuizActivity(BaseModel):
     """
     Quiz activity where each question has a text and several answers of which
     exactly one is correct.
@@ -35,5 +35,5 @@ class QuizActivity(TypedDict):
     questions: list[QuizQuestion]
     """Quiz questions"""
 
-    given_answers: list[int]
+    given_answers: list[int] = []
     """Answers from users (index of the answer in same order as the questions)"""

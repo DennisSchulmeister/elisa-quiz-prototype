@@ -6,40 +6,18 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from ..ai.callback      import ChatAgentCallbackABC
-from ..ai.chat          import ChatAgent
-from ..core.decorators  import handle_message
-from ..core.decorators  import websocket_handler
-from ..core.typing      import check_type
-from ..core.websocket   import ParentWebsocketHandler
-from ..core.websocket   import WebsocketMessage
-
-# class StartConversationMessage(WebsocketMessage):
-#     """
-#     Start new conversation and trigger welcome message by LLM.
-#     """
-#     language: str
-# 
-# class ResumeConversationMessage(WebsocketMessage, PersistedConversation):
-#     """
-#     Persisted conversation to resume from a previous session.
-#     """
-# 
-# class ChatInputMessage(WebsocketMessage):
-#     """
-#     Chat input from the user.
-#     """
-#     text: str
-#     language: str
-# 
-# class UpdateActivityMessage(WebsocketMessage, UpdateActivityData):
-#     """
-#     Message to exchange the updated internal state of a currently running
-#     interactive activity between client and server.
-#     """
+from ...ai.activity.types import ActivityTransaction
+from ...ai.callback       import ChatAgentCallback
+from ...ai.chat           import ChatAgent
+from ...ai.types          import AgentChatMessage
+from ...ai.types          import MemoryTransaction
+from ...ai.types          import UserChatMessage
+from ..decorators         import handle_message
+from ..decorators         import websocket_handler
+from ..parent             import ParentWebsocketHandler
 
 @websocket_handler
-class ChatHandler(ChatAgentCallbackABC):
+class ChatHandler(ChatAgentCallback):
     """
     Websocket message for chat conversations and interactive activities.
     """
@@ -58,7 +36,47 @@ class ChatHandler(ChatAgentCallbackABC):
         if key == "record_learning_topics":
             self.chat_agent.set_record_learning_topic(value)
 
+    @handle_message("start_chat", None)
+    async def handle_start_chat(self, message, **kwargs):
+        """
+        """
 
+    @handle_message("resume_chat", None)
+    async def handle_resume_chat(self, message, **kwargs):
+        """
+        """
+
+    @handle_message("user_chat_message", UserChatMessage)
+    async def handle_user_chat_message(self, message: UserChatMessage, **kwargs):
+        """
+        """
+    
+    @handle_message("activity_transaction", ActivityTransaction)
+    async def handle_activity_transaction(self, tx: ActivityTransaction, **kwargs):
+        """
+        """
+
+    #@override
+    async def send_agent_chat_message(self, message: AgentChatMessage, **kwargs):
+        """
+        Send an agent chat message to the client.
+        """
+        await self.parent.send_message("agent_chat_message", message.model_dump())
+    
+    #@override
+    async def send_memory_transaction(self, tx: MemoryTransaction, **kwargs):
+        """
+        Send conversation memory update to the client, when the client signaled
+        that it wants to persist the conversation.
+        """
+        await self.parent.send_message("memory_transaction", tx.model_dump())
+    
+    #@override
+    async def send_activity_transaction(self, tx: ActivityTransaction, **kwargs):
+        """
+        Send activity update to the client, when it was modified by the agent.
+        """
+        await self.parent.send_message("activity_transaction", tx.model_dump())
 
 
 #     @handle_message("start_conversation")
@@ -100,32 +118,3 @@ class ChatHandler(ChatAgentCallbackABC):
 #         server can mutate the internal state and send a similar message.
 #         """
 #         await self.chat_agent.process_activity_update(message)
-#     
-#     #override
-#     async def send_chat_message(self, message: ChatMessage):
-#         """
-#         Send a chat message to the client.
-#         """
-#         await self.parent.send_message("chat_message", message)
-#     
-#     #override
-#     async def send_start_activity(self, data: StartActivityData):
-#         """
-#         Send message to start an interactive activity to the client.
-#         """
-#         await self.parent.send_message("start_activity", data)
-#     
-#     #override
-#     async def send_update_activity(self, data: UpdateActivityData):
-#         """
-#         Send updated activity state from server to client.
-#         """
-#         await self.parent.send_message("update_activity")
-# 
-#     #override
-#     async def send_conversation_state(self, data: PersistedConversation):
-#         """
-#         Send conversation state to the client, so that the state can be persisted
-#         and the conversation be resumed in a new session.
-#         """
-#         await self.parent.send_message("conversation_state", data)

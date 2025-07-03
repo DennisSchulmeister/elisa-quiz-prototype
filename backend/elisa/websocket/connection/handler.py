@@ -6,10 +6,9 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from ..core.decorators import handle_message
-from ..core.decorators import websocket_handler
-from ..core.websocket  import ParentWebsocketHandler
-from ..core.websocket  import WebsocketMessage
+from ..decorators import handle_message
+from ..decorators import websocket_handler
+from ..parent     import ParentWebsocketHandler
 
 @websocket_handler
 class ConnectionHandler:
@@ -24,7 +23,7 @@ class ConnectionHandler:
         self.parent = parent
 
     @handle_message("ping")
-    async def handle_ping(self, message: WebsocketMessage):
+    async def handle_ping(self, **kwargs):
         """
         Handle ping message. Send back pong.
         """

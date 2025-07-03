@@ -6,38 +6,15 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-import datetime, traceback
+import traceback
 
 from bson                            import ObjectId
-from typing                          import Literal
-from typing                          import NotRequired
-from typing                          import TypedDict
 from pymongo.asynchronous.collection import AsyncCollection
 
-from ..core.database                 import mongo_client
-from ..core.database                 import now
-from ..core.typing                   import check_type
-
-class ErrorEntry(TypedDict):
-    """
-    Error or crash report that helps to analyze and fix bugs that occurred
-    in production.
-    """
-    _id:           NotRequired[ObjectId]
-    timestamp:     datetime.datetime
-    error_type:    Literal["server", "client", "message"]
-    error_message: str
-    stack_trace:   NotRequired[str]
-
-class BugReport(TypedDict):
-    """
-    Manual bug report filled-in within the client.
-    """
-    _id:         NotRequired[ObjectId]
-    timestamp:   datetime.datetime
-    description: str
-    contact:     str
-    status:      Literal["new", "in-progress", "resolved", "works-for-me", "wont-fix"]
+from ..utils                         import mongo_client
+from ..utils                         import now
+from .types                          import BugReport
+from .types                          import ErrorEntry
 
 class ErrorDatabase:
     """
@@ -46,10 +23,10 @@ class ErrorDatabase:
     db = mongo_client.error
     """Mongo database instance"""
 
-    errors: AsyncCollection[ErrorEntry] = mongo_client.error.errors
+    errors: AsyncCollection = mongo_client.error.errors
     """Error collection"""
 
-    bug_reports: AsyncCollection[BugReport] = mongo_client.error.bug_reports
+    bug_reports: AsyncCollection = mongo_client.error.bug_reports
     """Manual bug reports"""
 
     @classmethod
@@ -59,7 +36,7 @@ class ErrorDatabase:
         """
         error_message = str(exception)
         stack_trace   = ''.join(traceback.format_exception(type(exception), exception, exception.__traceback__))
-        
+
         error = ErrorEntry(
             timestamp     = now(),
             error_type    = "server",
@@ -67,7 +44,7 @@ class ErrorDatabase:
             stack_trace   = stack_trace,
         )
 
-        result = await cls.errors.insert_one(error)
+        result = await cls.errors.insert_one(error.model_dump())
         return result.inserted_id
 
     @classmethod
@@ -82,7 +59,7 @@ class ErrorDatabase:
             stack_trace   = stack_trace,
         )
 
-        result = await cls.errors.insert_one(error)
+        result = await cls.errors.insert_one(error.model_dump())
         return result.inserted_id
 
     @classmethod
@@ -96,20 +73,21 @@ class ErrorDatabase:
             error_message = error_message,
         )
 
-        result = await cls.errors.insert_one(error)
+        result = await cls.errors.insert_one(error.model_dump())
         return result.inserted_id
 
     @classmethod
-    async def insert_bug_report(cls, description: str, contact: str) -> ObjectId:
+    async def insert_bug_report(cls, username: str, description: str, contact: str) -> ObjectId:
         """
         Save a new manual bug report.
         """
         bug_report = BugReport(
             timestamp   = now(),
+            username    = username,
             description = description,
             contact     = contact,
             status      = "new",
         )
 
-        result = await cls.bug_reports.insert_one(bug_report)
+        result = await cls.bug_reports.insert_one(bug_report.model_dump())
         return result.inserted_id
