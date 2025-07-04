@@ -6,64 +6,77 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
+import uuid
+
 from pydantic        import BaseModel
+from pydantic        import Field
 from typing          import Literal
 from typing          import List
 
 from .activity.types import ActivityData
 from .activity.types import ActivityStatus
 
+class SystemMessageContent(BaseModel):
+    """
+    System message with an error or warning.
+    """
+    type: Literal["system"] = "system"
+    """Content type (System message)"""
+
+    text: str = ""
+    """Message text"""
+
 class SpeakMessageContent(BaseModel):
     """
     Spoken message content for a plain and simple chat message.
     """
-    type: Literal["speak"]
+    type: Literal["speak"] = "speak"
     """Content type (Regular speech message)"""
 
-    speak: str
+    speak: str = ""
     """Message text"""
 
 class ThinkMessageContent(BaseModel):
     """
     A single thought or reasoning step.
     """
-    type: Literal["think"]
+    type: Literal["think"] = "think"
     """Content type (Thought or reasoning step)"""
 
-    think: str
+    think: str = ""
     """Message text"""
 
 class ProcessStep(BaseModel):
     """
     A single process step in a sequential background process.
     """
-    name: str
+    name: str = ""
     """Process step name"""
 
-    status: Literal["planned", "running", "finished", "aborted"]
+    status: Literal["planned", "running", "finished", "aborted"] = "planned"
     """Current status"""
 
 class ProcessMessageContent(BaseModel):
     """
     Progress of a sequential background process.
     """
-    type: Literal["process"]
+    type: Literal["process"] = "process"
     """Content type (Sequential process progress)"""
 
-    steps: List[ProcessStep]
+    steps: List[ProcessStep] = []
     """Status of each individual step"""
 
 class ActivityMessageContent(BaseModel):
     """
     An interactive activity with custom content and custom UI, e.g. a quiz game.
     """
-    id: str
+    id: str = ""
     """Activity id"""
 
-    type: Literal["quiz"]
+    type: Literal["quiz"] = "quiz"
     """Activity type"""
 
-    status: ActivityStatus
+    status: ActivityStatus = "created"
     """Whether the activity is running"""
 
     data: ActivityData
@@ -79,6 +92,9 @@ class UserChatMessage(BaseModel):
     content: SpeakMessageContent
     """Message content"""
 
+AgentChatMessageContent = SystemMessageContent | SpeakMessageContent | ThinkMessageContent | ProcessMessageContent | ActivityMessageContent
+"""Possible content of a LLM-generated agent chat message"""
+
 class AgentChatMessage(BaseModel):
     """
     A single chat message as sent from the agent to the user.
@@ -89,7 +105,7 @@ class AgentChatMessage(BaseModel):
     id: str
     """Message id for streaming partial messages"""
 
-    content: SpeakMessageContent | ThinkMessageContent | ProcessMessageContent | ActivityMessageContent
+    content: AgentChatMessageContent
     """Message content"""
 
 ChatMessage = UserChatMessage | AgentChatMessage
@@ -106,10 +122,10 @@ class ShortTermMemory(BaseModel):
     summary. This bounds the context window for the LLM and simulates the memory
     of must humans, who also only remember the details of the most recent events.
     """
-    messages: List[ChatMessage]
+    messages: List[ChatMessage] = []
     """The most recent chat messages"""
 
-    previous: str
+    previous: str = ""
     """Fading summary of all older messages"""
 
 class LongTermMemory(BaseModel):
@@ -119,10 +135,10 @@ class LongTermMemory(BaseModel):
     rebuild the UI when picking up an old thread and not to provide conversation
     context to the LLM.
     """
-    thread_id: str
+    thread_id: str = ""
     """Thread id to distinguish conversations"""
 
-    messages: List[ChatMessage]
+    messages: List[ChatMessage] = []
     """Full chat message list"""
 
 class MemoryTransaction(BaseModel):
@@ -159,7 +175,35 @@ class StartChat(BaseModel):
 
     short_term: ShortTermMemory | None = None
     """
-    Short-term memory of previous chat, when persisted on the client. When a
-    thread id is received but no short-term memory, the memory is assumed to
-    be persisted by the server.
+    Short-term memory of previous chat, when persisted on the client. Ignored,
+    when the server persists the chat.
     """
+
+    persist: bool = False
+    """
+    Persist the chat on the server
+    """
+
+class ChatTitle(BaseModel):
+    """
+    Distilled title of the chat conversation so far.
+    """
+    meaningful: bool = Field(
+        description = "Whether the conversation provides enough information for a meaningful title",
+    )
+
+    title: str = Field(
+        description = "Clear, concise, and informative title for the conversation",
+    )
+
+class GuardRailResult(BaseModel):
+    """
+    Guard rail check of a received chat message to decide whether to pass it through.
+    """
+    reject: bool = Field(
+        description = "Whether the message should be rejected"
+    )
+
+    reasoning: str = Field(
+        description = "Reasoning behind the classification"
+    )

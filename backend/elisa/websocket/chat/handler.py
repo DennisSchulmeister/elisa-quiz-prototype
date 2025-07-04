@@ -6,7 +6,10 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
+from typing               import override
+
 from ...ai.activity.types import ActivityTransaction
+from ...ai.types          import ActivityMessageContent
 from ...ai.types          import StartChat
 from ...ai.callback       import ChatAgentCallback
 from ...ai.chat           import ChatAgent
@@ -56,6 +59,13 @@ class ChatHandler(ChatAgentCallback):
         """
         await self.chat_agent.process_chat_message(msg, user)
     
+    @handle_message("restart_activity", ActivityMessageContent)
+    async def handle_restart_activity(self, content: ActivityMessageContent, user: User, **kwargs):
+        """
+        Restart an interactive activity from the chat history.
+        """
+        await self.chat_agent.restart_activity(content, user)
+    
     @handle_message("activity_transaction", ActivityTransaction)
     async def handle_activity_transaction(self, tx: ActivityTransaction, user: User, **kwargs):
         """
@@ -70,14 +80,14 @@ class ChatHandler(ChatAgentCallback):
         """
         self.chat_agent.set_language(change.language)
 
-    #@override
+    @override
     async def send_agent_chat_message(self, msg: AgentChatMessage, **kwargs):
         """
         Send an agent chat message to the client.
         """
         await self.parent.send_message("agent_chat_message", msg.model_dump())
     
-    #@override
+    @override
     async def send_memory_transaction(self, tx: MemoryTransaction, **kwargs):
         """
         Send conversation memory update to the client, when the client signaled
@@ -85,7 +95,7 @@ class ChatHandler(ChatAgentCallback):
         """
         await self.parent.send_message("memory_transaction", tx.model_dump())
     
-    #@override
+    @override
     async def send_activity_transaction(self, tx: ActivityTransaction, **kwargs):
         """
         Send activity update to the client after modification by the agent.

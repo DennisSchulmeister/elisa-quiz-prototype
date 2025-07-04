@@ -9,6 +9,7 @@
 # License, or (at your option) any later version.
 
 import argparse, dotenv, os, uvicorn
+from uvicorn.config import LOGGING_CONFIG
 
 if __name__ == "__main__":
     dotenv.load_dotenv()
@@ -19,4 +20,11 @@ if __name__ == "__main__":
     parser.add_argument("--reload", action="store_true", default=os.getenv("ELISA_HOT_RELOAD", "false").lower() == "true")
     args = parser.parse_args()
 
-    uvicorn.run("elisa.app:app", host=args.host, port=args.port, reload=args.reload)
+    LOGGING_CONFIG["formatters"]["default"]["fmt"] = "%(asctime)s  %(levelprefix)s %(message)s"
+
+    uvicorn.run(
+        app        = "elisa.app:app",
+        host       = args.host,
+        port       = args.port,
+        reload     = args.reload,
+    )

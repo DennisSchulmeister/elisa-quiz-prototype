@@ -21,18 +21,12 @@ def websocket_handler(cls: Type[Any]) -> Type[Any]:
         "message_code2": [handler_method3],
     }
     ```
-
-    From the `@handle_message` decorator the methods have the following two additional
-    attributes for introspection by the parent websocket handler:
-
-    * `_message_code`: Message code handled by the method
-    * `_message_type`: Pydantic model class for the message data (or `None`)
     """
     cls._message_handlers = {}
 
     for method in cls.__dict__.values():
-        if hasattr(method, "_message_code"):
-            methods = cls._message_handlers.setdefault(method._message_code, [])
+        if hasattr(method, "_websocket"):
+            methods = cls._message_handlers.setdefault(method._websocket["message_code"], [])
             methods.append(method)
 
     return cls
