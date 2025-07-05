@@ -24,6 +24,12 @@ class SystemMessageContent(BaseModel):
 
     text: str = ""
     """Message text"""
+    
+    def ready_to_stream(self):
+        """
+        Only start streaming if the type is complete and there is already some text-
+        """
+        return self.type == "system" and self.text
 
 class SpeakMessageContent(BaseModel):
     """
@@ -35,6 +41,12 @@ class SpeakMessageContent(BaseModel):
     speak: str = ""
     """Message text"""
 
+    def ready_to_stream(self):
+        """
+        Only start streaming if the type is complete and there is already some text-
+        """
+        return self.type == "speak" and self.speak
+
 class ThinkMessageContent(BaseModel):
     """
     A single thought or reasoning step.
@@ -44,6 +56,12 @@ class ThinkMessageContent(BaseModel):
 
     think: str = ""
     """Message text"""
+
+    def ready_to_stream(self):
+        """
+        Only start streaming if the type is complete and there is already some text-
+        """
+        return self.type == "think" and self.think
     
 class ProcessStep(BaseModel):
     """
@@ -64,6 +82,12 @@ class ProcessMessageContent(BaseModel):
 
     steps: List[ProcessStep] = []
     """Status of each individual step"""
+
+    def ready_to_stream(self):
+        """
+        Only start streaming if the type is complete
+        """
+        return self.type == "process"
     
 class ActivityMessageContent(BaseModel):
     """
@@ -83,6 +107,12 @@ class ActivityMessageContent(BaseModel):
 
     data: ActivityData
     """Shared data with the content and state of the activity"""
+
+    def ready_to_stream(self):
+        """
+        Only start streaming if the type is complete and there is already some text-
+        """
+        return self.type == "activity" and self.data
         
 class UserChatMessage(BaseModel):
     """
@@ -124,7 +154,7 @@ class ShortTermMemory(BaseModel):
     summary. This bounds the context window for the LLM and simulates the memory
     of must humans, who also only remember the details of the most recent events.
     """
-    messages: List[ChatMessage] | str = []
+    messages: List[ChatMessage] = []
     """The most recent chat messages"""
 
     previous: str = ""

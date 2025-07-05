@@ -208,8 +208,7 @@ class ChatAgent:
             if filter_cb:
                 partial = await filter_cb(partial)
 
-            # TODO: Handle other message types
-            if partial.type == "speak" and partial.speak:
+            if partial.ready_to_stream():
                 msg = AgentChatMessage(source="agent", id=msg_id, content=partial)
                 await self._callback.send_agent_chat_message(msg)
         

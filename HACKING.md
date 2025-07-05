@@ -11,6 +11,7 @@ document tries to summarize a few things.
 1. [Poetry Package Management](#poetry-package-management)
 1. [NPM and esbuild](#npm-and-esbuild)
 1. [Building the Distribution Package](#building-the-distribution-package)
+1. [Testing the Websocket Communication](#testing-the-websocket-communication)
 
 Quick Start
 -----------
@@ -110,6 +111,20 @@ allows you to run the following commands from within the `frontend` directory.
 * `npm run check` - Run all checks and tests: eslint, TypeScript, unit tests
 * `npm run start` or `npm start` - Run from built distribution files
 * `npm run tsc` - Check source code with TypeScript only
+
+Testing the Websocket Communication
+-----------------------------------
+
+`npm run wscat` starts a command-line tool that automatically connects to the server.
+Communication can be tested by manually typing in websocket messages, e.g.:
+
+```json
+{"code": "start_chat", "jwt": "", "body": {"language": "de"}}
+```
+
+```json
+{"code": "user_chat_message", "jwt": "", "body": {"source": "user", "content": {"type": "speak", "speak": "Hello! I am Murdock, the Preventor of Information Technology."}}}
+```
 
 Building the Distribution Package
 ---------------------------------

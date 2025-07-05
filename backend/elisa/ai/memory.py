@@ -115,10 +115,12 @@ class ChatMemory:
         """
         # Update transient short-term memory
         if isinstance(msg, ChatMessage):
-            self._short_term.messages.append(msg)
+            if msg.content.type == "speak":
+                self._short_term.messages.append(msg)
         else:
             for _msg in msg:
-                self._short_term.messages.append(_msg)
+                if _msg.content.type == "speak":
+                    self._short_term.messages.append(_msg)
         
         summary_messages = self._short_term.messages[:-self.SHORT_TERM_N]
         self._short_term.messages = self._short_term.messages[-self.SHORT_TERM_N:]
