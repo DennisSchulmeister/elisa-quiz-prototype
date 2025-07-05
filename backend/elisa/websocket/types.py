@@ -7,7 +7,6 @@
 # License, or (at your option) any later version.
 
 from pydantic import BaseModel
-from typing   import Any
 
 class WebsocketMessage(BaseModel):
     """

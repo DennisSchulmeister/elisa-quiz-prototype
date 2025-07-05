@@ -8,13 +8,17 @@
 
 import uuid
 
+from typing             import TYPE_CHECKING
+
 from ..database.user.db import UserDatabase
-from .callback          import ChatAgentInternal
 from .types             import ChatMessage
 from .types             import ChatTitle
 from .types             import MemoryTransaction
 from .types             import ShortTermMemory
 from .types             import SpeakMessageContent
+
+if TYPE_CHECKING:
+    from .chat import ChatAgent
 
 class ChatMemory:
     """
@@ -32,10 +36,10 @@ class ChatMemory:
 
     def __init__(
         self,
-        internal:  ChatAgentInternal,
-        username:  str = "",
-        thread_id: str = "",
-        title:     str = "",
+        chat_agent: "ChatAgent",
+        username:   str = "",
+        thread_id:  str = "",
+        title:      str = "",
         short_term: ShortTermMemory | None = None,
     ):
         """
@@ -44,7 +48,7 @@ class ChatMemory:
         Note: An empty username means, that the chat is persisted by the client. Therefor
         it might be empty even though a user has been authenticated.
         """
-        self._internal   = internal
+        self._chat_agent = chat_agent
         self._username   = username
         self._thread_id  = thread_id or str(uuid.uuid4())
         self._short_term = short_term or ShortTermMemory()
@@ -53,7 +57,7 @@ class ChatMemory:
     @classmethod
     def restore_from_client(
         cls,
-        internal:   ChatAgentInternal,
+        chat_agent: "ChatAgent",
         thread_id:  str = "",
         title:      str = "",
         short_term: ShortTermMemory | None = None,
@@ -67,7 +71,7 @@ class ChatMemory:
         Otherwise the saved values must be given.
         """
         obj = cls(
-            internal   = internal,
+            chat_agent = chat_agent,
             username   = "",
             thread_id  = thread_id,
             title      = title,
@@ -79,9 +83,9 @@ class ChatMemory:
     @classmethod
     async def restore_from_database(
         cls,
-        internal:  ChatAgentInternal,
-        username:  str,
-        thread_id: str = "",
+        chat_agent: "ChatAgent",
+        username:   str,
+        thread_id:  str = "",
     ):
         """
         Create new instance from server-persisted memory or start new persisted chat,
@@ -92,7 +96,7 @@ class ChatMemory:
 
             if chat:
                 return cls(
-                    internal   = internal,
+                    chat_agent = chat_agent,
                     username   = chat.username,
                     thread_id  = chat.long_term.thread_id,
                     title      = chat.title,
@@ -100,8 +104,8 @@ class ChatMemory:
                 )
         
         return cls(
-            internal = internal,
-            username = username
+            chat_agent = chat_agent,
+            username   = username,
         )
 
     async def add_message(self, msg: ChatMessage|list[ChatMessage]):
@@ -148,7 +152,7 @@ class ChatMemory:
 
                 What was said since then: {messages}
             """
-            response = await self._internal._get_client().chat.completions.create(
+            response = await self._chat_agent._client.chat.completions.create(
                 messages = [
                     {"role": "system", "content": role_description},
                     {"role": "user",   "content": user_message},
@@ -188,7 +192,7 @@ class ChatMemory:
                 {messages}
             """
 
-            response = await self._internal._get_client().chat.completions.create(
+            response = await self._chat_agent._client.chat.completions.create(
                 messages = [
                     {"role": "system", "content": role_description},
                     {"role": "user",   "content": user_message},
@@ -215,4 +219,4 @@ class ChatMemory:
         if self._username:
             await UserDatabase.apply_memory_transaction(self._username, tx)
         else:
-            await self._internal._get_callback().send_memory_transaction(tx)
+            await self._chat_agent._callback.send_memory_transaction(tx)

@@ -9,6 +9,7 @@
 import datetime
 
 from pydantic    import BaseModel
+
 from ...ai.types import LongTermMemory
 from ...ai.types import ShortTermMemory
 

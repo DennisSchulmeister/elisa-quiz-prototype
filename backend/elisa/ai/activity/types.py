@@ -12,6 +12,9 @@ from typing      import Literal
 
 from .quiz.types import QuizActivity
 
+ActivityType = Literal["quiz"]
+"""Combined activity types of all supported activities"""
+
 ActivityData = QuizActivity
 """Combined data types of all supported activities"""
 

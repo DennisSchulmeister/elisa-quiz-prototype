@@ -8,6 +8,7 @@
         "start:backend": "cd backend && python3 main.py --reload",
         "start:frontend": "cd frontend && npm start",
         "start:docker":   "docker compose -f docker-compose-dev.yml up",
+        "debug:backend": "cd backend && python3 main.py",
         "mongo:cli": "docker exec -it elisa-mongodb-1 mongosh -u admin -p secret",
         "wscat": "npx wscat -c ws://localhost:8000",
         "dist": "npm run dist:frontend && npm run dist:backend && npm run dist:finish",

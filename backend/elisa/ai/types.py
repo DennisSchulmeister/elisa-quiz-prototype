@@ -6,8 +6,6 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-import uuid
-
 from pydantic        import BaseModel
 from pydantic        import Field
 from typing          import Literal
@@ -15,12 +13,13 @@ from typing          import List
 
 from .activity.types import ActivityData
 from .activity.types import ActivityStatus
+from .activity.types import ActivityType
 
 class SystemMessageContent(BaseModel):
     """
     System message with an error or warning.
     """
-    type: Literal["system"] = "system"
+    type: Literal["system"] | str = "system"
     """Content type (System message)"""
 
     text: str = ""
@@ -30,7 +29,7 @@ class SpeakMessageContent(BaseModel):
     """
     Spoken message content for a plain and simple chat message.
     """
-    type: Literal["speak"] = "speak"
+    type: Literal["speak"] | str = "speak"
     """Content type (Regular speech message)"""
 
     speak: str = ""
@@ -40,12 +39,12 @@ class ThinkMessageContent(BaseModel):
     """
     A single thought or reasoning step.
     """
-    type: Literal["think"] = "think"
+    type: Literal["think"] | str = "think"
     """Content type (Thought or reasoning step)"""
 
     think: str = ""
     """Message text"""
-
+    
 class ProcessStep(BaseModel):
     """
     A single process step in a sequential background process.
@@ -53,19 +52,19 @@ class ProcessStep(BaseModel):
     name: str = ""
     """Process step name"""
 
-    status: Literal["planned", "running", "finished", "aborted"] = "planned"
+    status: Literal["planned", "running", "finished", "aborted"] | str = "planned"
     """Current status"""
 
 class ProcessMessageContent(BaseModel):
     """
     Progress of a sequential background process.
     """
-    type: Literal["process"] = "process"
+    type: Literal["process"] | str = "process"
     """Content type (Sequential process progress)"""
 
     steps: List[ProcessStep] = []
     """Status of each individual step"""
-
+    
 class ActivityMessageContent(BaseModel):
     """
     An interactive activity with custom content and custom UI, e.g. a quiz game.
@@ -73,20 +72,23 @@ class ActivityMessageContent(BaseModel):
     id: str = ""
     """Activity id"""
 
-    type: Literal["quiz"] = "quiz"
+    type: Literal["activity"] | str = "activity"
+    """Content type (Interactive activity)"""
+
+    activity: ActivityType
     """Activity type"""
 
-    status: ActivityStatus = "created"
+    status: ActivityStatus | str = "created"
     """Whether the activity is running"""
 
     data: ActivityData
     """Shared data with the content and state of the activity"""
-
+        
 class UserChatMessage(BaseModel):
     """
     A single chat message sent from the user to the agent.
     """
-    source: Literal["user"]
+    source: Literal["user"] = "user"
     """Message source (always the user)"""
 
     content: SpeakMessageContent
@@ -99,7 +101,7 @@ class AgentChatMessage(BaseModel):
     """
     A single chat message as sent from the agent to the user.
     """
-    source: Literal["agent"]
+    source: Literal["agent"] = "agent"
     """Message source (always the agent)"""
 
     id: str
@@ -122,7 +124,7 @@ class ShortTermMemory(BaseModel):
     summary. This bounds the context window for the LLM and simulates the memory
     of must humans, who also only remember the details of the most recent events.
     """
-    messages: List[ChatMessage] = []
+    messages: List[ChatMessage] | str = []
     """The most recent chat messages"""
 
     previous: str = ""

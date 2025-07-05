@@ -9,12 +9,10 @@
 import instructor, json, os, uuid
 
 from typing          import AsyncGenerator
-from typing          import override
 
 from ..auth.user     import User
 from .activity.types import ActivityTransaction
 from .callback       import ChatAgentCallback
-from .callback       import ChatAgentInternal
 from .callback       import FilterAgentChatMessageContent
 from .memory         import ChatMemory
 from .types          import AgentChatMessage
@@ -26,7 +24,7 @@ from .types          import SystemMessageContent
 from .types          import StartChat
 from .types          import UserChatMessage
 
-class ChatAgent(ChatAgentInternal):
+class ChatAgent:
     """
     Top-level instance of the AI chat agent. Receives chat messages from the
     user, streams chat messages back to the user and applies global guard rails
@@ -52,7 +50,7 @@ class ChatAgent(ChatAgentInternal):
         self._callback = callback
         self._record_learning_topic = False
         self._language = "en"
-        self._memory = ChatMemory(internal=self)
+        self._memory = ChatMemory(chat_agent=self)
     
     def set_record_learning_topic(self, allow: bool):
         """
@@ -77,14 +75,14 @@ class ChatAgent(ChatAgentInternal):
         if user.subject and start.persist:
             # If thread_id is empty, a new chat will be started
             self._memory = await ChatMemory.restore_from_database(
-                internal  = self,
-                username  = user.subject,
-                thread_id = start.thread_id,
+                chat_agent = self,
+                username   = user.subject,
+                thread_id  = start.thread_id,
             )
         else:
             # If thread_id and short_term are empty, a new chat will be started
             self._memory = ChatMemory.restore_from_client(
-                internal   = self,
+                chat_agent = self,
                 thread_id  = start.thread_id,
                 short_term = start.short_term,
             )
@@ -134,6 +132,7 @@ class ChatAgent(ChatAgentInternal):
             )
 
         # Answer or transfer to another agent
+        await self._memory.add_message(msg)
         await self._stream_agent_message(self._answer_user_message(msg.content.speak))
 
         # TODO: Enable transfer to sub-agent, prefer agent of currently running activity (if any)
@@ -188,28 +187,19 @@ class ChatAgent(ChatAgentInternal):
             stream         = True,
         )
 
-    @override
-    def _get_client(self):
-        """
-        Provide LLM client to down-stream objects.
-        """
-        return self._client
-
-    def _get_callback(self) -> ChatAgentCallback:
-        """
-        Provide the websocket callback to down-stream objects.
-        """
-        return self._callback
-
-    @override
     async def _stream_agent_message(
         self,
         partials:  AsyncGenerator,
         filter_cb: FilterAgentChatMessageContent|None = None
     ):
         """
-        Stream out an LLM-generated agent chat message to the client and append the
-        final message to the memory.
+        Internal method called by the agent and various activities to stream out an
+        LLM-generated agent chat message to the client and to append the message to
+        the memory. This is the default way to send messages to the client.
+
+        Parameters:
+            partials:  Return value of `self.client.chat.completions.create_partial()`
+            filter_cb: Callback function to modify the LLM-generated message content
         """
         msg    = None
         msg_id = str(uuid.uuid4())
@@ -218,21 +208,19 @@ class ChatAgent(ChatAgentInternal):
             if filter_cb:
                 partial = await filter_cb(partial)
 
-            msg = AgentChatMessage(source="agent", id=msg_id, content=partial)
-            
-            # TODO: Fix!
-            #partial.type == "speak"
-            if partial.type == "speak":
+            # TODO: Handle other message types
+            if partial.type == "speak" and partial.speak:
+                msg = AgentChatMessage(source="agent", id=msg_id, content=partial)
                 await self._callback.send_agent_chat_message(msg)
         
         if msg:
             await self._memory.add_message(msg)
     
-    @override
     async def _send_agent_message(self, content: AgentChatMessageContent):
         """
         Send out an agent chat message all at once without streaming and append it
-        to the memory.
+        to the memory. This is meant for small messages where streaming doesn't improve
+        the UX.
         """
         msg = AgentChatMessage(source="agent", id=str(uuid.uuid4()), content=content)
         await self._callback.send_agent_chat_message(msg)
