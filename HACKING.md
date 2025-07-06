@@ -119,11 +119,11 @@ Testing the Websocket Communication
 Communication can be tested by manually typing in websocket messages, e.g.:
 
 ```json
-{"code": "start_chat", "jwt": "", "body": {"language": "de"}}
+{"code": "start_chat", "jwt": "", "body": {"language": "en"}}
 ```
 
 ```json
-{"code": "user_chat_message", "jwt": "", "body": {"source": "user", "content": {"type": "speak", "speak": "Hello! I am Murdock, the Preventor of Information Technology."}}}
+{"code": "user_chat_message", "jwt": "", "body": {"source": "user", "content": {"type": "speak", "speak": "Let's learn Python!"}}}
 ```
 
 Building the Distribution Package

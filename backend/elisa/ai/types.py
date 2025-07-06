@@ -6,14 +6,14 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from pydantic        import BaseModel
-from pydantic        import Field
-from typing          import Literal
-from typing          import List
+from pydantic     import BaseModel
+from pydantic     import Field
+from typing       import Literal
+from typing       import List
 
-from .activity.types import ActivityData
-from .activity.types import ActivityStatus
-from .activity.types import ActivityType
+from .agent.types import ActivityCode
+from .agent.types import ActivityId
+from .agent.types import AgentCode
 
 class SystemMessageContent(BaseModel):
     """
@@ -92,27 +92,29 @@ class ProcessMessageContent(BaseModel):
 class ActivityMessageContent(BaseModel):
     """
     An interactive activity with custom content and custom UI, e.g. a quiz game.
+    The actual activity is managed globally with the message referencing it in
+    the chat history.
     """
-    id: str = ""
-    """Activity id"""
-
     type: Literal["activity"] | str = "activity"
     """Content type (Interactive activity)"""
 
-    activity: ActivityType
+    agent: AgentCode
+    """Agent responsible for running the activity"""
+
+    activity: ActivityCode
     """Activity type"""
 
-    status: ActivityStatus | str = "created"
-    """Whether the activity is running"""
+    id: ActivityId
+    """Activity id to persist and restore the activity state"""
 
-    data: ActivityData
-    """Shared data with the content and state of the activity"""
+    title: str
+    """Activity title as shown in the chat history"""
 
     def ready_to_stream(self):
         """
-        Only start streaming if the type is complete and there is already some text-
+        Only start streaming if the type is complete and there is already some text.
         """
-        return self.type == "activity" and self.data
+        return self.type == "activity" and self.title
         
 class UserChatMessage(BaseModel):
     """
@@ -124,7 +126,8 @@ class UserChatMessage(BaseModel):
     content: SpeakMessageContent
     """Message content"""
 
-AgentChatMessageContent = SystemMessageContent | SpeakMessageContent | ThinkMessageContent | ProcessMessageContent | ActivityMessageContent
+AgentChatMessageContent = SystemMessageContent | SpeakMessageContent | ThinkMessageContent \
+                        | ProcessMessageContent | ActivityMessageContent
 """Possible content of a LLM-generated agent chat message"""
 
 class AgentChatMessage(BaseModel):
@@ -173,7 +176,7 @@ class LongTermMemory(BaseModel):
     messages: List[ChatMessage] = []
     """Full chat message list"""
 
-class MemoryTransaction(BaseModel):
+class MemoryUpdate(BaseModel):
     """
     An update to the long-term and short-term conversation memory sent by the agent
     to the persistence layer to update the persisted memory accordingly.
@@ -198,7 +201,6 @@ class StartChat(BaseModel):
     Start new chat conversation or resume previous conversation based
     on its persisted short-term memory.
     """
-
     language: str
     """Current user interface language"""
 
@@ -212,9 +214,7 @@ class StartChat(BaseModel):
     """
 
     persist: bool = False
-    """
-    Persist the chat on the server
-    """
+    """Persist the chat on the server"""
 
 class ChatTitle(BaseModel):
     """

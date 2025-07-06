@@ -6,21 +6,25 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from typing               import override
+from typing                import override
+from typing                import TYPE_CHECKING
 
-from ...ai.activity.types import ActivityTransaction
-from ...ai.types          import ActivityMessageContent
-from ...ai.types          import StartChat
-from ...ai.callback       import ChatAgentCallback
-from ...ai.chat           import ChatAgent
-from ...ai.types          import AgentChatMessage
-from ...ai.types          import MemoryTransaction
-from ...ai.types          import UserChatMessage
-from ...auth.user         import User
-from ..decorators         import handle_message
-from ..decorators         import websocket_handler
-from ..parent             import ParentWebsocketHandler
-from .types               import ChangeLanguage
+from ...ai.agent.types     import ActivityUpdate
+from ...ai.types           import StartChat
+from ...ai.callback        import ChatAgentCallback
+from ...ai.chat            import ChatManager
+from ...ai.types           import UserChatMessage
+from ..decorators          import handle_message
+from ..decorators          import websocket_handler
+from .types                import ChangeLanguage
+from .types                import StartActivity
+
+if TYPE_CHECKING:
+    from ...ai.agent.types import AgentUpdate
+    from ...ai.types       import AgentChatMessage
+    from ...ai.types       import MemoryUpdate
+    from ...auth.user      import User
+    from ..parent          import ParentWebsocketHandler
 
 @websocket_handler
 class ChatHandler(ChatAgentCallback):
@@ -31,8 +35,8 @@ class ChatHandler(ChatAgentCallback):
         """
         Initialize client-bound handler instance.
         """
-        self.parent     = parent
-        self.chat_agent = ChatAgent(self)
+        self.parent  = parent
+        self.manager = ChatManager(self)
     
     def notify(self, key: str, value):
         """
@@ -40,45 +44,46 @@ class ChatHandler(ChatAgentCallback):
         track the learning topics.
         """
         if key == "record_learning_topics":
-            self.chat_agent.set_record_learning_topic(value)
+            self.manager.set_record_learning_topic(value)
 
     @handle_message("start_chat", StartChat)
-    async def handle_start_chat(self, chat: StartChat, user: User, **kwargs):
+    async def handle_start_chat(self, start: StartChat, user: User, **kwargs):
         """
         Start new chat conversation or resume previous conversation. To resume an
         old conversation, the client sends its thread id. If the chat history is
         saved on the client, it also sends the short-term memory. Otherwise it is
         assumed, that the history is saved by the server.
         """
-        await self.chat_agent.start_chat(chat, user)
+        await self.manager.start_chat(start, user)
 
     @handle_message("user_chat_message", UserChatMessage)
     async def handle_user_chat_message(self, msg: UserChatMessage, user: User, **kwargs):
         """
         Process chat message sent by the user.
         """
-        await self.chat_agent.process_chat_message(msg, user)
+        await self.manager.process_chat_message(msg, user)
     
-    @handle_message("restart_activity", ActivityMessageContent)
-    async def handle_restart_activity(self, content: ActivityMessageContent, user: User, **kwargs):
+    @handle_message("start_activity", StartActivity)
+    async def handle_start_activity(self, start: StartActivity, user: User, **kwargs):
         """
-        Restart an interactive activity from the chat history.
+        Start or resume an interactive activity.
         """
-        await self.chat_agent.restart_activity(content, user)
+        await self.manager.start_activity(start.id)
     
-    @handle_message("activity_transaction", ActivityTransaction)
-    async def handle_activity_transaction(self, tx: ActivityTransaction, user: User, **kwargs):
+    @handle_message("activity_update", ActivityUpdate)
+    async def handle_activity_update(self, update: ActivityUpdate, user: User, **kwargs):
         """
-        Handle activity update after modification by the client.
+        Send activity update to the owning AI agent after modification by the user.
         """
-        await self.chat_agent.apply_activity_transaction(tx, user)
-    
+        update.origin = "user"
+        await self.manager.propagate_activity_update(update)
+
     @handle_message("change_language", ChangeLanguage)
     async def handle_change_language(self, change: ChangeLanguage, **kwargs):
         """
         Remember new language for AI generated chat messages.
         """
-        self.chat_agent.set_language(change.language)
+        self.manager.set_language(change.language)
 
     @override
     async def send_agent_chat_message(self, msg: AgentChatMessage, **kwargs):
@@ -88,16 +93,24 @@ class ChatHandler(ChatAgentCallback):
         await self.parent.send_message("agent_chat_message", msg.model_dump())
     
     @override
-    async def send_memory_transaction(self, tx: MemoryTransaction, **kwargs):
+    async def send_memory_update(self, update: MemoryUpdate, **kwargs):
         """
         Send conversation memory update to the client, when the client signaled
         that it wants to persist the conversation.
         """
-        await self.parent.send_message("memory_transaction", tx.model_dump())
+        await self.parent.send_message("memory_update", update.model_dump())
     
     @override
-    async def send_activity_transaction(self, tx: ActivityTransaction, **kwargs):
+    async def send_agent_update(self, update: AgentUpdate, **kwargs):
         """
-        Send activity update to the client after modification by the agent.
+        Send agent state update to the client, when the client signaled that
+        it wants to persist the conversation.
         """
-        await self.parent.send_message("activity_transaction", tx.model_dump())
+        await self.parent.send_message("agent_update", update.model_dump())
+
+    @override
+    async def send_activity_update(self, update: ActivityUpdate, **kwargs):
+        """
+        Send activity update to the client after modification by an agent.
+        """
+        await self.parent.send_message("activity_update", update.model_dump())

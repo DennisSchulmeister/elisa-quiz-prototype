@@ -8,11 +8,13 @@
 
 import datetime
 
-from bson        import ObjectId
-from pydantic    import BaseModel
+from bson              import ObjectId
+from pydantic          import BaseModel
 
-from ...ai.types import LongTermMemory
-from ...ai.types import ShortTermMemory
+from ...ai.agent.types import ActivityStates
+from ...ai.agent.types import AgentStates
+from ...ai.types       import LongTermMemory
+from ...ai.types       import ShortTermMemory
 
 class Chat(BaseModel):
     """
@@ -27,6 +29,8 @@ class Chat(BaseModel):
     encrypt:    bool
     long_term:  LongTermMemory
     short_term: ShortTermMemory
+    agents:     AgentStates
+    activities: ActivityStates
 
 class ChatShort(BaseModel):
     """

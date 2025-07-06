@@ -6,7 +6,8 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from pydantic import BaseModel
+from pydantic          import BaseModel
+from ...ai.agent.types import ActivityId
 
 class ChangeLanguage(BaseModel):
     """
@@ -14,3 +15,9 @@ class ChangeLanguage(BaseModel):
     so that the AI agent from then on responds in the same language.
     """
     language: str
+
+class StartActivity(BaseModel):
+    """
+    Message sent by the client to start or resume an interactive activity.
+    """
+    id: ActivityId

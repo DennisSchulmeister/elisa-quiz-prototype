@@ -10,7 +10,7 @@ from bson                            import ObjectId
 from pydantic                        import ValidationError
 from pymongo.asynchronous.collection import AsyncCollection
 
-from ...ai.types                     import MemoryTransaction
+from ...ai.types                     import MemoryUpdate
 from ...database.utils               import now
 from ..utils                         import mongo_client
 from .types                          import Chat
@@ -137,9 +137,9 @@ class UserDatabase:
         })
     
     @classmethod
-    async def apply_memory_transaction(cls, username: str, tx: MemoryTransaction) -> ObjectId:
+    async def apply_memory_update(cls, username: str, tx: MemoryUpdate) -> ObjectId:
         """
-        Apply changes of the given memory transaction to the database. This either creates
+        Apply changes of the given memory update to the database. This either creates
         a new chat history entry, if it doesn't exist, or updates the existing entry.
 
         Note: This version does not yet support encryption!

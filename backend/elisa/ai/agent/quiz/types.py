@@ -13,27 +13,15 @@ class QuizQuestion(BaseModel):
     Question type for the quiz activity.
     """
     question: str
-    """Question text"""
-
-    answers: list[str]
-    """Possible answers"""
-
-    correct: int
-    """Index of correct answer"""
+    answers:  list[str]
+    correct:  int
 
 class QuizActivity(BaseModel):
     """
     Quiz activity where each question has a text and several answers of which
     exactly one is correct.
     """
-    subject: str
-    """Quiz subject"""
-
-    level: str
-    """Difficulty level"""
-
-    questions: list[QuizQuestion]
-    """Quiz questions"""
-
+    subject:       str
+    level:         str
+    questions:     list[QuizQuestion]
     given_answers: list[int] = []
-    """Answers from users (index of the answer in same order as the questions)"""

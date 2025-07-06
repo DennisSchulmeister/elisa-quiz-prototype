@@ -13,12 +13,12 @@ from typing             import TYPE_CHECKING
 from ..database.user.db import UserDatabase
 from .types             import ChatMessage
 from .types             import ChatTitle
-from .types             import MemoryTransaction
+from .types             import MemoryUpdate
 from .types             import ShortTermMemory
 from .types             import SpeakMessageContent
 
 if TYPE_CHECKING:
-    from .chat import ChatAgent
+    from .chat import ChatManager
 
 class ChatMemory:
     """
@@ -36,7 +36,7 @@ class ChatMemory:
 
     def __init__(
         self,
-        chat_agent: "ChatAgent",
+        manager:    "ChatManager",
         username:   str = "",
         thread_id:  str = "",
         title:      str = "",
@@ -48,7 +48,7 @@ class ChatMemory:
         Note: An empty username means, that the chat is persisted by the client. Therefor
         it might be empty even though a user has been authenticated.
         """
-        self._chat_agent = chat_agent
+        self._manager    = manager
         self._username   = username
         self._thread_id  = thread_id or str(uuid.uuid4())
         self._short_term = short_term or ShortTermMemory()
@@ -57,7 +57,7 @@ class ChatMemory:
     @classmethod
     def restore_from_client(
         cls,
-        chat_agent: "ChatAgent",
+        manager:    "ChatManager",
         thread_id:  str = "",
         title:      str = "",
         short_term: ShortTermMemory | None = None,
@@ -71,7 +71,7 @@ class ChatMemory:
         Otherwise the saved values must be given.
         """
         obj = cls(
-            chat_agent = chat_agent,
+            manager    = manager,
             username   = "",
             thread_id  = thread_id,
             title      = title,
@@ -83,7 +83,7 @@ class ChatMemory:
     @classmethod
     async def restore_from_database(
         cls,
-        chat_agent: "ChatAgent",
+        manager:    "ChatManager",
         username:   str,
         thread_id:  str = "",
     ):
@@ -96,7 +96,7 @@ class ChatMemory:
 
             if chat:
                 return cls(
-                    chat_agent = chat_agent,
+                    manager    = manager,
                     username   = chat.username,
                     thread_id  = chat.long_term.thread_id,
                     title      = chat.title,
@@ -104,8 +104,8 @@ class ChatMemory:
                 )
         
         return cls(
-            chat_agent = chat_agent,
-            username   = username,
+            manager  = manager,
+            username = username,
         )
 
     async def add_message(self, msg: ChatMessage|list[ChatMessage]):
@@ -154,7 +154,7 @@ class ChatMemory:
 
                 What was said since then: {messages}
             """
-            response = await self._chat_agent._client.chat.completions.create(
+            response = await self._manager._client.chat.completions.create(
                 messages = [
                     {"role": "system", "content": role_description},
                     {"role": "user",   "content": user_message},
@@ -194,7 +194,7 @@ class ChatMemory:
                 {messages}
             """
 
-            response = await self._chat_agent._client.chat.completions.create(
+            response = await self._manager._client.chat.completions.create(
                 messages = [
                     {"role": "system", "content": role_description},
                     {"role": "user",   "content": user_message},
@@ -210,7 +210,7 @@ class ChatMemory:
                 self._title = response.title
 
         # Update persistent memory
-        tx = MemoryTransaction(
+        update = MemoryUpdate(
             thread_id    = self._thread_id,
             title        = self._title,
             new_messages = [msg] if isinstance(msg, ChatMessage) else msg,
@@ -219,6 +219,6 @@ class ChatMemory:
         )
 
         if self._username:
-            await UserDatabase.apply_memory_transaction(self._username, tx)
+            await UserDatabase.apply_memory_update(self._username, update)
         else:
-            await self._chat_agent._callback.send_memory_transaction(tx)
+            await self._manager._callback.send_memory_update(update)

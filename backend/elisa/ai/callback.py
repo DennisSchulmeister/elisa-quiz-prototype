@@ -6,16 +6,17 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from abc             import ABC
-from abc             import abstractmethod
-from instructor      import AsyncInstructor
-from typing          import AsyncGenerator
-from typing          import Protocol
+from abc    import ABC
+from abc    import abstractmethod
+from typing import Protocol
+from typing import TYPE_CHECKING
 
-from .activity.types import ActivityTransaction
-from .types          import AgentChatMessage
-from .types          import AgentChatMessageContent
-from .types          import MemoryTransaction
+if TYPE_CHECKING:
+    from .agent.types import ActivityUpdate
+    from .agent.types import AgentUpdate
+    from .types       import AgentChatMessage
+    from .types       import AgentChatMessageContent
+    from .types       import MemoryUpdate
 
 class ChatAgentCallback(ABC):
     """
@@ -30,17 +31,27 @@ class ChatAgentCallback(ABC):
         """
     
     @abstractmethod
-    async def send_memory_transaction(self, tx: MemoryTransaction):
+    async def send_memory_update(self, update: MemoryUpdate):
         """
-        Update persisted conversation memory, when it is saved by the client.
-        This message is only generated for conversations that are persisted
-        by the client (instead of the server or not at all).
+        Send conversation memory update to the client, so that it can save the
+        updated memory in the persistent chat history. This message is only sent,
+        when the chat is saved on the client.
         """
     
     @abstractmethod
-    async def send_activity_transaction(self, tx: ActivityTransaction):
+    async def send_agent_update(self, update: AgentUpdate):
         """
-        Send activity update to the client after modification by the agent.
+        Send agent state update to the client, so that it can save the updated
+        agent state in the persistent chat history. This message is only sent, when
+        the chat is saved on the client.
+        """
+
+    @abstractmethod
+    async def send_activity_update(self, update: ActivityUpdate):
+        """
+        Send activity state update to the client, so that it can update the UI
+        accordingly and save the updated activity state in the persistent chat
+        history, if the chat is saved on the client.
         """
 
 class FilterAgentChatMessageContent(Protocol):
