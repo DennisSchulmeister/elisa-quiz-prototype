@@ -9,14 +9,12 @@
 from abc    import ABC
 from abc    import abstractmethod
 from typing import Protocol
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from .agent.types import ActivityUpdate
-    from .agent.types import AgentUpdate
-    from .types       import AgentChatMessage
-    from .types       import AgentChatMessageContent
-    from .types       import MemoryUpdate
+from .agent.types import ActivityUpdate
+from .agent.types import AgentUpdate
+from .types       import AssistantChatMessage
+from .types       import AssistantChatMessageContent
+from .types       import MemoryUpdate
 
 class ChatAgentCallback(ABC):
     """
@@ -25,9 +23,9 @@ class ChatAgentCallback(ABC):
     the websocket handler class owning the chat agent.
     """
     @abstractmethod
-    async def send_agent_chat_message(self, msg: AgentChatMessage):
+    async def send_assistant_chat_message(self, msg: AssistantChatMessage):
         """
-        Send an agent chat message to the client.
+        Send an assistant chat message to the client.
         """
     
     @abstractmethod
@@ -54,10 +52,10 @@ class ChatAgentCallback(ABC):
         history, if the chat is saved on the client.
         """
 
-class FilterAgentChatMessageContent(Protocol):
+class FilterAssistantChatMessageContent(Protocol):
     """
     Callback function to modify partial message contents before they are streamed
     out to the client.
     """
-    async def __call__(self, msg: AgentChatMessageContent) -> AgentChatMessageContent:
+    async def __call__(self, msg: AssistantChatMessageContent) -> AssistantChatMessageContent:
         ...

@@ -8,9 +8,9 @@
 
 from pydantic import BaseModel
 
-class WelcomeState(BaseModel):
+class DefaultState(BaseModel):
     """
-    Internal state of the welcome agent. Simply tracks whether the initial
+    Internal state of the default agent. Simply tracks whether the initial
     greetings have been exchanged or we still need to say hello to the user.
     """
     welcome_done: bool = False

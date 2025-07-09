@@ -8,31 +8,31 @@
 
 import datetime
 
-from pydantic    import BaseModel
+from pydantic          import BaseModel
 
-from ...ai.types import LongTermMemory
-from ...ai.types import ShortTermMemory
+from ...ai.agent.types import ActivityStates
+from ...ai.agent.types import AgentStates
+from ...ai.types       import ChatKey
+from ...ai.types       import ConversationMemory
+from ...ai.types       import MessageHistory
+from ...ai.types       import PersistenceStrategy
 
-class ChatKey(BaseModel):
-    """
-    Key values (besides username) to address a persisted chat.
-    """
-    thread_id: str
-
-class RenameChat(BaseModel):
+class RenameChat(ChatKey):
     """
     Message body to change the title of a chat conversation.
     """
-    thread_id: str
-    title:     str
+    title: str
 
 class SaveChat(BaseModel):
     """
     Message body to move a full chat conversation from client to server,
     so that it is centrally saved on the server.
     """
-    timestamp:  datetime.datetime
-    title:      str
-    encrypt:    bool
-    long_term:  LongTermMemory
-    short_term: ShortTermMemory
+    timestamp:   datetime.datetime
+    title:       str
+    persistence: PersistenceStrategy
+    encrypt:     bool
+    history:     MessageHistory
+    memory:      ConversationMemory
+    agents:      AgentStates
+    activities:  ActivityStates

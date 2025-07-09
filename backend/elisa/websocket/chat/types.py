@@ -8,6 +8,19 @@
 
 from pydantic          import BaseModel
 from ...ai.agent.types import ActivityId
+from ...ai.types       import PersistedState
+from ...ai.types       import PersistenceStrategy
+
+class StartChat(BaseModel):
+    """
+    Message sent by the client to start a new chat or resume a previous chat.
+    Depending on where the chat is saved, the client only sends the thread id
+    or the full chat state to resume a chat.
+    """
+    username:    str = ""
+    thread_id:   str = ""
+    persistence: PersistenceStrategy = "none"
+    state:       PersistedState | None = None
 
 class ChangeLanguage(BaseModel):
     """

@@ -13,17 +13,16 @@ from typing       import List
 
 from .agent.types import ActivityCode
 from .agent.types import ActivityId
+from .agent.types import ActivityStates
 from .agent.types import AgentCode
+from .agent.types import AgentStates
 
 class SystemMessageContent(BaseModel):
     """
     System message with an error or warning.
     """
     type: Literal["system"] | str = "system"
-    """Content type (System message)"""
-
     text: str = ""
-    """Message text"""
     
     def ready_to_stream(self):
         """
@@ -35,11 +34,8 @@ class SpeakMessageContent(BaseModel):
     """
     Spoken message content for a plain and simple chat message.
     """
-    type: Literal["speak"] | str = "speak"
-    """Content type (Regular speech message)"""
-
+    type:  Literal["speak"] | str = "speak"
     speak: str = ""
-    """Message text"""
 
     def ready_to_stream(self):
         """
@@ -51,11 +47,8 @@ class ThinkMessageContent(BaseModel):
     """
     A single thought or reasoning step.
     """
-    type: Literal["think"] | str = "think"
-    """Content type (Thought or reasoning step)"""
-
+    type:  Literal["think"] | str = "think"
     think: str = ""
-    """Message text"""
 
     def ready_to_stream(self):
         """
@@ -67,21 +60,15 @@ class ProcessStep(BaseModel):
     """
     A single process step in a sequential background process.
     """
-    name: str = ""
-    """Process step name"""
-
+    name:   str = ""
     status: Literal["planned", "running", "finished", "aborted"] | str = "planned"
-    """Current status"""
 
 class ProcessMessageContent(BaseModel):
     """
     Progress of a sequential background process.
     """
     type: Literal["process"] | str = "process"
-    """Content type (Sequential process progress)"""
-
     steps: List[ProcessStep] = []
-    """Status of each individual step"""
 
     def ready_to_stream(self):
         """
@@ -95,20 +82,11 @@ class ActivityMessageContent(BaseModel):
     The actual activity is managed globally with the message referencing it in
     the chat history.
     """
-    type: Literal["activity"] | str = "activity"
-    """Content type (Interactive activity)"""
-
-    agent: AgentCode
-    """Agent responsible for running the activity"""
-
+    type:     Literal["activity"] | str = "activity"
+    agent:    AgentCode
     activity: ActivityCode
-    """Activity type"""
-
-    id: ActivityId
-    """Activity id to persist and restore the activity state"""
-
-    title: str
-    """Activity title as shown in the chat history"""
+    id:       ActivityId
+    title:    str
 
     def ready_to_stream(self):
         """
@@ -120,101 +98,71 @@ class UserChatMessage(BaseModel):
     """
     A single chat message sent from the user to the agent.
     """
-    source: Literal["user"] = "user"
-    """Message source (always the user)"""
-
+    source:  Literal["user"] = "user"
     content: SpeakMessageContent
-    """Message content"""
 
-AgentChatMessageContent = SystemMessageContent | SpeakMessageContent | ThinkMessageContent \
-                        | ProcessMessageContent | ActivityMessageContent
-"""Possible content of a LLM-generated agent chat message"""
+AssistantChatMessageContent = SystemMessageContent | SpeakMessageContent | ThinkMessageContent | ProcessMessageContent | ActivityMessageContent
+"""Allowed content types for agent chat messages"""
 
-class AgentChatMessage(BaseModel):
+class AssistantChatMessage(BaseModel):
     """
     A single chat message as sent from the agent to the user.
     """
     source: Literal["agent"] = "agent"
-    """Message source (always the agent)"""
-
     id: str
-    """Message id for streaming partial messages"""
+    content: AssistantChatMessageContent
 
-    content: AgentChatMessageContent
-    """Message content"""
-
-ChatMessage = UserChatMessage | AgentChatMessage
+ChatMessage = UserChatMessage | AssistantChatMessage
 """User or agent chat message"""
 
-class ShortTermMemory(BaseModel):
+class ConversationMemory(BaseModel):
     """
-    Short-term conversation memory that provides context to the LLM about the
-    previously exchanged chat messages.
+    Short-term conversational memory that provides context to the LLM about the
+    previously exchanged chat messages. Its purpose is to make the LLM "remember"
+    what was said before.
     
-    Even though it is persisted along with the long-term memory, its only purpose
-    is to make the LLM "remember" what was said before. That's why only the past
-    N messages are kept verbatim and all older messages get accumulated into a
-    summary. This bounds the context window for the LLM and simulates the memory
-    of must humans, who also only remember the details of the most recent events.
+    The strategy is to keep the past N messages verbatim and to accumulate all older
+    messages in a fading summary. This bounds the context window for the LLM and simulates
+    human memory, which cannot remember details for long, either.
     """
     messages: List[ChatMessage] = []
-    """The most recent chat messages"""
-
     previous: str = ""
-    """Fading summary of all older messages"""
-
-class LongTermMemory(BaseModel):
-    """
-    Long-term conversation memory that persists the full details of a conversation
-    thread. Unlike real humans all details are remembered, but only to be able to
-    rebuild the UI when picking up an old thread and not to provide conversation
-    context to the LLM.
-    """
-    thread_id: str = ""
-    """Thread id to distinguish conversations"""
-
-    messages: List[ChatMessage] = []
-    """Full chat message list"""
 
 class MemoryUpdate(BaseModel):
     """
-    An update to the long-term and short-term conversation memory sent by the agent
-    to the persistence layer to update the persisted memory accordingly.
+    An update to the conversational memory that appends new messages and updates
+    the fading summary. The other fields allow the client to keep its local memory
+    in sync with the server, if the chat is saved on the client.
     """
-    thread_id: str
-    """Thread id to distinguish conversations"""
-
-    title: str = ""
-    """Chat title"""
-
+    chat_title:   str = ""
     new_messages: List[ChatMessage]
-    """New messages"""
-
     short_term_n: int
-    """Number of recent messages to keep in the short-term memory"""
+    previous:     str
 
-    previous: str
-    """Updated short-term summary of the older messages"""
-
-class StartChat(BaseModel):
+class MessageHistory(BaseModel):
     """
-    Start new chat conversation or resume previous conversation based
-    on its persisted short-term memory.
+    Message history that records all chat messages in sequential order.
     """
-    language: str
-    """Current user interface language"""
+    messages: List[ChatMessage] = []
 
-    thread_id: str = ""
-    """Thread id of previous chat"""
-
-    short_term: ShortTermMemory | None = None
+class PersistedState(BaseModel):
     """
-    Short-term memory of previous chat, when persisted on the client. Ignored,
-    when the server persists the chat.
+    Client-persisted state of a chat.
     """
+    title:      str
+    memory:     ConversationMemory
+    agents:     AgentStates
+    activities: ActivityStates
 
-    persist: bool = False
-    """Persist the chat on the server"""
+PersistenceStrategy = Literal["none", "client", "server", "both"]
+"""Persistence strategy where a chat is saved"""
+
+class ChatKey(BaseModel):
+    """
+    Key-fields for persisted chats.
+    """
+    username:  str
+    thread_id: str
 
 class ChatTitle(BaseModel):
     """

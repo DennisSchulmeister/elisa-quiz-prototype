@@ -13,24 +13,26 @@ from pydantic          import BaseModel
 
 from ...ai.agent.types import ActivityStates
 from ...ai.agent.types import AgentStates
-from ...ai.types       import LongTermMemory
-from ...ai.types       import ShortTermMemory
+from ...ai.types       import ChatKey
+from ...ai.types       import ConversationMemory
+from ...ai.types       import MessageHistory
+from ...ai.types       import PersistenceStrategy
 
-class Chat(BaseModel):
+class Chat(ChatKey):
     """
     Chat conversation threads persisted on the server. This is just the combined
     long-term memory (full message history) and short-term memory (context memory)
     of a chat conversation.
     """
-    _id:        ObjectId | None = None
-    username:   str
-    timestamp:  datetime.datetime
-    title:      str
-    encrypt:    bool
-    long_term:  LongTermMemory
-    short_term: ShortTermMemory
-    agents:     AgentStates
-    activities: ActivityStates
+    _id:         ObjectId | None = None
+    timestamp:   datetime.datetime
+    title:       str
+    persistence: PersistenceStrategy
+    encrypt:     bool
+    history:     MessageHistory
+    memory:      ConversationMemory
+    agents:      AgentStates
+    activities:  ActivityStates
 
 class ChatShort(BaseModel):
     """

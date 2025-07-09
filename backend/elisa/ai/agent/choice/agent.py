@@ -6,14 +6,17 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from ..base import AgentBase
-from .types import ChoiceActivity
+from ..base  import AgentBase
+from ..types import Stateless
 
-class ChoiceAgent(AgentBase):
+class ChoiceAgent(AgentBase[Stateless]):
     """
     Suggest and offer a choice of interactive activities.
     """
     code = "choice-agent"
+
+    def __init__(self, **kwargs):
+        super().__init__(state=Stateless(), **kwargs)
     
     activities = {
         "choice": "A menu with interactive activities to choose from",

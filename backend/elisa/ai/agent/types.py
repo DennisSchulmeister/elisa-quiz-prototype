@@ -13,7 +13,7 @@ from typing   import Literal
 AgentCode = str
 """Unique short-code to distinguish agent types"""
 
-AgentStates = dict[AgentCode, BaseModel]
+AgentStates = dict[AgentCode, dict]
 """Persistent state of all agents"""
 
 ActivityCode = str
@@ -25,9 +25,6 @@ ActivityId = str
 ActivityStatus = Literal["created", "running", "paused", "finished", "aborted"]
 """Current status of an activity """
 
-ActivityStates = dict[ActivityId, BaseModel]
-"""Persistent state of all activities"""
-
 class Stateless(BaseModel):
     """
     Sentinel state model for stateless agents.
@@ -37,50 +34,35 @@ class ActivityState(BaseModel):
     """
     Shared state of an interactive activity.
     """
-    agent: AgentCode
-    """Agent responsible for running the activity"""
-
+    id:       ActivityId
+    agent:    AgentCode
     activity: ActivityCode
-    """Activity type"""
-
-    id: ActivityId
-    """Globally unique activity id"""
-
-    title: str
-    """Activity title"""
-
-    status: ActivityStatus
-    """Whether the activity is currently running or not"""
-
-    data: BaseModel
-    """Shared data of the activity (depending on the activity type)"""
+    title:    str
+    status:   ActivityStatus
+    data:     dict
+    
+ActivityStates = dict[ActivityId, ActivityState]
+"""Persistent state of all activities"""
 
 class StateUpdate(BaseModel):
     """
-    A single object mutation.
+    A single object mutation. The path used dot-notation, e.g.
+    "question.answers[0]"` or `"text".
     """
-    path: str
-    """Affected path, e.g.: `"question.answers[0]"` or `"text"`"""
-
+    path:  str
     value: Any
-    """New value"""
 
 class AgentUpdate(StateUpdate):
     """
     Mutation to an agent's state.
     """
     agent: AgentCode
-    """Agent code"""
 
 class ActivityUpdate(StateUpdate):
     """
     Mutation to an activity's state.
     """
     id: ActivityId
-    """Activity instance id"""
-
-    origin: Literal["agent", "user"]
-    """Which side mutated the state"""
 
 ProcessChatMessageResult = bool | AgentCode
 """
@@ -103,7 +85,4 @@ This return value determines how the chat manager proceeds:
 #     to another agent.
 #     """
 #     handover: str | None = None
-#     """Code of the next agent to hand-over to or "*" if unknown"""
-# 
 #     message: AgentChatMessage | None = None
-#     """Chat message from the agent to the user"""

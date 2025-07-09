@@ -7,14 +7,14 @@
 # License, or (at your option) any later version.
 
 from .choice.agent         import ChoiceAgent
+from .default.agent        import DefaultAgent
 from .exam_interview.agent import ExamInterviewAgent
 from .quiz.agent           import QuizAgent
-from .welcome.agent        import WelcomeAgent
 
 agents = [
     ChoiceAgent,
+    DefaultAgent,
     ExamInterviewAgent,
     QuizAgent,
-    WelcomeAgent,
 ]
 """All agent classes known to the top-level chat manager"""

@@ -34,5 +34,5 @@ db.learning_topics.createIndex({ count: 1 });
 
 // --- user.chat_history
 db = db.getSiblingDB("user")
-db.chats.createIndex({ username: 1, long_term: { thread_id: 1 }});
+db.chats.createIndex({ username: 1, thread_id: 1 });
 db.chats.createIndex({ username: 1, timestamp: 1 });

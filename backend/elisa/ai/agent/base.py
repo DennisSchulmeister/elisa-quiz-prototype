@@ -6,23 +6,22 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from typing   import TYPE_CHECKING
-from pydantic import BaseModel
+from typing       import Generic
+from typing       import Type
+from typing       import TypeVar
 
-from .types   import ActivityUpdate
-from .types   import AgentUpdate
-from .types   import Stateless
+from ...auth.user import User
+from ..chat       import ChatManager
+from ..types      import AgentCode
+from ..types      import UserChatMessage
+from .types       import ActivityUpdate
+from .types       import AgentUpdate
+from .types       import ProcessChatMessageResult
 
-if TYPE_CHECKING:
-    from typing       import Type
+State = TypeVar("State")
+Agent = TypeVar("Agent")
 
-    from ...auth.user import User
-    from ..chat       import ChatManager
-    from ..types      import AgentCode
-    from ..types      import UserChatMessage
-    from .types       import ProcessChatMessageResult
-
-class AgentBase:
+class AgentBase(Generic[State]):
     """
     Base class for AI agents managed by the chat manager.
     """
@@ -40,36 +39,18 @@ class AgentBase:
     activities: dict[str, str] = {}
     """Activity codes and short descriptions"""
 
-    state: Type[BaseModel] = Stateless
-    """Persistent agent state (must be default-constructable)"""
-
-    def __init__(self, manager: "ChatManager"):
+    def __init__(self, manager: "ChatManager", state: State):
         """
         Constructor. Save reference to top-level chat manager and initialize the contained
         persona instances and state model.
         """
         self._manager  = manager
         self._personas = {code: self.personas[code](self, manager) for code in self.personas.keys()}
-        self._state    = self.state()
-
-        self.initialize_default_state()
+        self._state    = state
 
     #==================================
     # Hooks to customize agent behavior
     #==================================
-
-    def initialize_default_state(self):
-        """
-        Override this method to populate `self._state` with the default state, if your agent
-        maintains state and you need finer control than possible with the default values of
-        the model class
-        
-        Note:
-            This is called in `__init__()` so that the agent instance might not yet be fully
-            initialized. You can directly assign values to the properties of `self._state`
-            but should avoid replacing the whole object.
-        """
-        pass
 
     async def process_chat_message(self, msg: UserChatMessage, user: User) -> ProcessChatMessageResult:
         """
@@ -138,8 +119,6 @@ class AgentBase:
             
             * `KeyError` is raised, when the path cannot be fully resolved.
         """
-        _apply_update(self._state, path, value)
-
         await self._manager.propagate_agent_update(
             update = AgentUpdate(
                 agent = self.code,
@@ -176,25 +155,22 @@ class AgentBase:
         if self._manager._current_activity.agent != self.code:
             raise TypeError(f"Agent {self.code} cannot update activities by agent {self._manager._current_activity.agent}")
     
-        _apply_update(self._manager._current_activity, path, value)
-
         await self._manager.propagate_activity_update(
             ActivityUpdate(
-                id    = self._manager._current_activity.id,
-                path  = path,
-                value = value,
-                origin = "agent",
+                id     = self._manager._current_activity.id,
+                path   = path,
+                value  = value,
             ),
         )
 
-class PersonaBase:
+class PersonaBase(Generic[Agent]):
     """
     Personas enable an agent to exhibit distinct behaviors in different states.
     In agents with multiple personas, each persona handles its own LLM calls,
     allowing for unique system prompts and parameters, while all personas share
     the agent's state.
     """
-    def __init__(self, agent: AgentBase, manager: "ChatManager"):
+    def __init__(self, agent: Agent, manager: "ChatManager"):
         """
         Constructor. Save reference to the parent agent.
         """
@@ -210,42 +186,3 @@ class PersonaBase:
         agent code to hand-over to another agent.
         """
         return False
-
-def _apply_update(obj, path: str, value = None):
-    """
-    Internal implementation for the `update_state()` and `update_activity()` methods
-    that actually performs the requested update. Raises `KeyError` when the path
-    cannot be fully resolved.
-    """
-    parent   = None
-    child    = obj
-    key      = 0
-    is_index = False
-
-    for subpath in path.split("."):
-        # Traverse child properties
-        parent = child
-        key    = subpath.split("[")[0]
-
-        if hasattr(child, key):
-            child = getattr(child, key)
-        elif key in child:
-            child = child[key]
-        else:
-            parent = None
-            break
-    
-        # Traverse list indices
-        if "[" in subpath and "]" in subpath:
-            for index in subpath.split("[")[1:]:
-                parent = child
-                key = int(index.replace("]", ""))
-                child = child[key]
-
-    if not parent:
-        raise KeyError(f"Key not found: {path}")
-    
-    if not value and is_index:
-        del parent[key]
-    else:
-        parent[key] = value

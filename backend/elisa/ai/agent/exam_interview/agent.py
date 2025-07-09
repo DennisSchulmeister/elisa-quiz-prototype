@@ -10,7 +10,7 @@ from ..base import AgentBase
 from .types import ExamInterviewActivity
 from .types import ExamInterviewState
 
-class ExamInterviewAgent(AgentBase):
+class ExamInterviewAgent(AgentBase[ExamInterviewState]):
     """
     Suggest and offer a choice of interactive activities.
     """
@@ -19,3 +19,6 @@ class ExamInterviewAgent(AgentBase):
     activities = {
         "exam-interview": "A menu with interactive activities to choose from",
     }
+
+    def __init__(self, **kwargs):
+        super().__init__(state=ExamInterviewState(), **kwargs)
