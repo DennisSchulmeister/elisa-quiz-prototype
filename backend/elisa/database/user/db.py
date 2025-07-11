@@ -189,7 +189,7 @@ class UserDatabase:
         if object_id:
             await cls.chats.update_one(
                 {"_id": object_id},
-                {"$set": {"agents." + mongo_path(update.path): update.value}
+                {"$set": {"agents." + mongo_path(update.agent, update.path): update.value}
             })
 
         return object_id
@@ -210,15 +210,18 @@ class UserDatabase:
         if object_id:
             await cls.chats.update_one(
                 {"_id": object_id},
-                {"$set": {"activities." + mongo_path(update.path): update.value}
+                {"$set": {"activities." + mongo_path(update.id, update.path): update.value}
             })
 
         return object_id
 
-def mongo_path(path: str) -> str:
+def mongo_path(key: str, path: str) -> str:
     """
     Convert the internal path notation to mongo notation. The difference lies
     in the indexing of arrays. Mongo uses dot-notation there, too. Internally
     we use traditional square-bracket notation.
     """
-    return path.replace("[", ".").replace("]", ".")
+    if path:
+        return key + "." + path.replace("[", ".").replace("]", ".")
+    else:
+        return key

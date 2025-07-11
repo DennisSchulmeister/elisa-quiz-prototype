@@ -76,6 +76,9 @@ class AgentBase(Generic[State]):
         To handle the message create a response, call the assistant's `_send_assistant_chat_message()`
         or `_stream_assistant_chat_message()` methods and return True. Don't forget to include the user
         message in these calls! Return False or an agent code to hand-over to another agent.
+
+        To start a new activity, first create the activity by calling `create_activity()` on the assistant
+        and then sending a chat message with content type "activity" to the client.
         """
         persona_code = await self.determine_persona(msg, user)
 
@@ -185,6 +188,9 @@ class PersonaBase(Generic[Agent]):
         To handle the message create a response, call the assistant's `_send_assistant_chat_message()`
         or `_stream_assistant_chat_message()` methods and return True. Don't forget to include the user
         message in these calls! Return False or an agent code to hand-over to another agent.
+
+        To start a new activity, first create the activity by calling `create_activity()` on the assistant
+        and then sending a chat message with content type "activity" to the client.
         """
         return False
 

@@ -7,8 +7,10 @@
 # License, or (at your option) any later version.
 
 from pydantic import BaseModel
+from pydantic import Field
 from typing   import Any
 from typing   import Literal
+from uuid     import uuid4
 
 AgentCode = str
 """Unique short-code to distinguish agent types"""
@@ -22,7 +24,7 @@ ActivityCode = str
 ActivityId = str
 """Globally unique activity id (GUID string)"""
 
-ActivityStatus = Literal["created", "running", "paused", "finished", "aborted"]
+ActivityStatus = Literal["created", "running", "paused", "finished"]
 """Current status of an activity """
 
 class Stateless(BaseModel):
@@ -34,7 +36,7 @@ class ActivityState(BaseModel):
     """
     Shared state of an interactive activity.
     """
-    id:       ActivityId
+    id:       ActivityId = Field(default_factory = lambda: str(uuid4()))
     agent:    AgentCode
     activity: ActivityCode
     title:    str

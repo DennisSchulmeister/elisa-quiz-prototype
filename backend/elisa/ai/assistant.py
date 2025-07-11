@@ -19,6 +19,7 @@ from .agent.all         import get_all_agent_classes
 from .agent.all         import get_all_agents_prompt
 from .agent.base        import default_role_description
 from .agent.base        import default_summary_message
+from .agent.types       import ActivityId
 from .agent.types       import ActivityState
 from .agent.types       import ActivityUpdate
 from .agent.types       import AgentCode
@@ -189,13 +190,6 @@ class AIAssistant:
         """
         return self._persistence in ["server", "both"]
 
-    @property
-    def activity_running(self):
-        """
-        Return whether an interactive activity is currently running.
-        """
-        return self._current_activity and self._current_activity.status == "running"
-
     #===================================
     # Handle incoming user chat messages
     #===================================
@@ -288,8 +282,8 @@ class AIAssistant:
         current_agent     = ""
         current_activity  = ""
 
-        if self.activity_running and self._current_agent:
-            chosen_agent_code = self._current_agent.code
+        if self._current_activity and self._current_activity.status == "running":
+            chosen_agent_code = self._current_activity.agent
 
         for _ in range(self.MAX_ROUTING_TRIES):
             if not chosen_agent_code:
@@ -416,23 +410,60 @@ class AIAssistant:
     # Propagation of state updates
     #=============================
 
-    # async def start_activity(self, activity_id: ActivityId):
-    #     """
-    #     Start or resume an interactive activity.
-    #     """
-    #     # TODO: Start activity
+    async def create_activity(self, activity: ActivityState):
+        """
+        Add a new interactive activity, possibly created by the LLM.
+        """
+        await self.propagate_activity_update(ActivityUpdate(
+            id    = activity.id,
+            path  = "",
+            value = activity
+        ))
+
+    async def start_activity(self, activity_id: ActivityId):
+        """
+        Start or resume an interactive activity. The activity must already exist, meaning it
+        must already have been created by calling `propagate_activity_update()` with an update
+        object that contains the initial activity state and no path.
+        """
+        if self._current_activity and self._current_activity.status == "running":
+            await self.propagate_activity_update(ActivityUpdate(
+                id    = self._current_activity.id,
+                path  = "status",
+                value = "paused"
+            ))
+        
+        try:
+            self._current_activity = self._state.activities[activity_id]
+        except KeyError:
+            return
+    
+        await self.propagate_activity_update(ActivityUpdate(
+            id    = self._current_activity.id,
+            path  = "status",
+            value = "running"
+        ))
 
     async def propagate_activity_update(self, update: ActivityUpdate):
         """
         Distribute and process an update to the current activity's state. This mutates the
         activity state in memory and persists the change.
+        
+        Note:
+            To insert a new activity call `create_activity()`. Internally it propagates an
+            activity update with an empty path and the full activity as value.
         """
         activity = self._state.activities[update.id]
 
-        if not activity:
+        if not activity and update.path:
             raise KeyError(f"Activity not found: {update.id}")
         
-        _apply_update(activity, update.path, update.value)
+        if update.path:
+            # Update field inside existing activity
+            _apply_update(activity, update.path, update.value)
+        else:
+            # Insert new activity
+            self._state.activities[update.id] = update.value
 
         if self.persistence_server:
             await UserDatabase.apply_activity_update(self.chat_key, update)
@@ -450,7 +481,7 @@ class AIAssistant:
         if not agent:
             raise KeyError(f"Agent not found: {update.agent}")
         
-        _apply_update(agent.state, update.path, update.value)
+        _apply_update(agent._state, update.path, update.value)
 
         if self.persistence_server:
             await UserDatabase.apply_agent_update(self.chat_key, update)
