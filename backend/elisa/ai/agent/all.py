@@ -16,10 +16,10 @@ def get_all_agent_classes():
     from .quiz.agent           import QuizAgent
 
     return [
-        ChoiceAgent,
         DefaultAgent,
-        ExamInterviewAgent,
-        QuizAgent,
+        # ChoiceAgent,
+        # ExamInterviewAgent,
+        # QuizAgent,
     ]
 
 def get_all_agents_prompt():

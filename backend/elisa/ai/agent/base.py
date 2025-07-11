@@ -6,6 +6,7 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
+from typing       import Callable
 from typing       import Generic
 from typing       import Type
 from typing       import TypeVar
@@ -34,7 +35,7 @@ class AgentBase(Generic[State]):
     code: "AgentCode"
     """Unique short-code to distinguish agent types"""
 
-    personas: "dict[str, Type[PersonaBase]]" = {}
+    personas: "dict[str, Callable[..., Type[PersonaBase]]]" = {}
     """Personas used by this agent"""
 
     activities: dict[str, str] = {}
@@ -46,8 +47,11 @@ class AgentBase(Generic[State]):
         persona instances and state model.
         """
         self._assistant = assistant
-        self._personas  = {code: self.personas[code](self, assistant) for code in self.personas.keys()}
+        self._personas  = {}
         self._state     = state
+
+        for code, persona in self.personas.items():
+            self._personas[code] = persona()(self, assistant)
 
     #==================================
     # Hooks to customize agent behavior

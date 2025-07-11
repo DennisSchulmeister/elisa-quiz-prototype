@@ -166,7 +166,7 @@ class AIAssistant:
         )
 
         default_agent: "DefaultAgent" = cast("DefaultAgent", manager._agents["default"])
-        default_agent.greet_user()
+        await default_agent.greet_user()
         return manager
     
     @property

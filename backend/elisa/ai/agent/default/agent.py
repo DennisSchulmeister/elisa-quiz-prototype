@@ -6,33 +6,94 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from ..base import AgentBase
-from ..base import PersonaBase
-from .types import DefaultState
+from ....auth.user import User
+from ...types      import AssistantChatMessage
+from ...types      import UserChatMessage
+from ...types      import SpeakMessageContent
+from ..base        import AgentBase
+from ..base        import default_role_description
+from ..base        import default_summary_message
+from ..types       import ProcessChatMessageResult
+from .types        import DefaultState
 
 class DefaultAgent(AgentBase[DefaultState]):
     """
     Default agent that responds to all chat messages not targeted at a more specialized agent.
     """
-    code  = "default-agent"
+    code = "default-agent"
 
     def __init__(self, **kwargs):
         super().__init__(state=DefaultState(), **kwargs)
 
-    def greet_user(self):
+    async def greet_user(self):
         """
         Say hello to the user to initiate the conversation, if not already done.
+        The "if not done" is important so that the greeting is not repeated when
+        the user resumes an old chat.
         """
-        if not self._state.welcome_done:
-            # Say "Hi!" to the LLM and stream back response
-            pass            
+        if self._state.welcome_done:
+            return
 
-class WelcomePersona(PersonaBase):
-    """
-    Specialized persona to welcome the user at the start of the conversation.
-    """
+        await self._assistant.stream_assistant_chat_message(
+            assistant_message = AssistantChatMessage(),
+            partials          = self._assistant._client.chat.completions.create_partial(
+                messages = [
+                    {
+                        "role": "system", 
+                        "content": default_role_description,
+                    }, {
+                        "role": "user", 
+                        "content": """
+                            Task: Give me a warm welcome and introduce yourself.
+                            Then ask for my name and what topic I want to learn.
 
-class DefaultPersona(PersonaBase):
-    """
-    Default persona after the welcome procedure.
-    """
+                            Language: Please respond in <language_code>{{ language }}</language_code>.
+                        """,
+                    }
+                ],
+                context = {
+                    "language": self._assistant.language,
+                },
+                response_model = SpeakMessageContent,
+            ),
+        )
+
+        await self.update_agent("welcome_done", True)
+    
+    async def process_chat_message(self, msg: UserChatMessage, user: User) -> ProcessChatMessageResult:
+        """
+        Respond to the given user chat message.
+        """
+        await self._assistant.stream_assistant_chat_message(
+            user_message      = msg,
+            assistant_message = AssistantChatMessage(),
+            partials          = self._assistant._client.chat.completions.create_partial(
+                messages = [
+                    {
+                        "role": "system", 
+                        "content": default_role_description,
+                    }, {
+                        "role": "system", 
+                        "content": default_summary_message,
+                    }, {
+                        "role": "system", 
+                        "content": """
+                            Task: Answer the user message below. Always try to be supportive and suggest
+                            possible follow-ups to increase the learning effect.
+
+                            Language: Please respond in <language_code>{{ language }}</language_code>.
+                        """,
+                    }, {
+                        "role": "user",
+                        "content": msg.content.speak,
+                    }
+                ],
+                context = {
+                    "memory":   self._assistant._state.memory,
+                    "language": self._assistant.language,
+                },
+                response_model = SpeakMessageContent,
+            ),
+        )
+
+        return True
