@@ -10,7 +10,7 @@ from contextlib                    import asynccontextmanager
 from fastapi                       import FastAPI
 from fastapi                       import WebSocket
 
-from .ai.chat                      import ChatManager
+from .ai.assistant                 import AIAssistant
 from .auth.user                    import User
 from .websocket.parent             import ParentWebsocketHandler
 from .websocket.analytics.handler  import AnalyticsHandler
@@ -22,7 +22,7 @@ from .websocket.user.handler       import UserHandler
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Start-up code before handling requests    
-    ChatManager.create_client()
+    AIAssistant.create_client()
     User.read_config()
 
     ParentWebsocketHandler.add_handler(AnalyticsHandler)

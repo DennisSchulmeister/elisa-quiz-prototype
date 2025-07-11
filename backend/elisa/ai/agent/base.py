@@ -11,7 +11,7 @@ from typing       import Type
 from typing       import TypeVar
 
 from ...auth.user import User
-from ..chat       import ChatManager
+from ..assistant  import AIAssistant
 from ..types      import AgentCode
 from ..types      import UserChatMessage
 from .types       import ActivityUpdate
@@ -23,7 +23,8 @@ Agent = TypeVar("Agent")
 
 class AgentBase(Generic[State]):
     """
-    Base class for AI agents managed by the chat manager.
+    Base class for the AI agents that implement the the domain logic exhibited
+    by the AI assistant.
     """
 
     #=========================================
@@ -39,14 +40,14 @@ class AgentBase(Generic[State]):
     activities: dict[str, str] = {}
     """Activity codes and short descriptions"""
 
-    def __init__(self, manager: "ChatManager", state: State):
+    def __init__(self, assistant: AIAssistant, state: State):
         """
         Constructor. Save reference to top-level chat manager and initialize the contained
         persona instances and state model.
         """
-        self._manager  = manager
-        self._personas = {code: self.personas[code](self, manager) for code in self.personas.keys()}
-        self._state    = state
+        self._assistant = assistant
+        self._personas  = {code: self.personas[code](self, assistant) for code in self.personas.keys()}
+        self._state     = state
 
     #==================================
     # Hooks to customize agent behavior
@@ -65,16 +66,16 @@ class AgentBase(Generic[State]):
         Returns:
             True if the message was handled by this agent (an agent response will be sent).
             False or an agent code if the message should be handed over to another agent.
-            See `ProcessChatMessageResult` documentation for details.
 
         Note:
-            Usually, no response should be sent to the client if the agent cannot handle
-            the message. Returning True means an agent response will be sent, but the
-            response may still instruct the manager to hand over to another agent, meaning
-            the LLM ultimately decides if the message was handled.
+            Usually, no response should be sent to the client if the agent cannot handle the
+            message. Returning True means an agent response will be sent, but the response may
+            still instruct the assistant to hand over to another agent, meaning the LLM ultimately
+            decides if the message was handled.
         
-        To handle the message create a response, call the manager's `_send_agent_response()`
-        or `_stream_agent_response()` methods and return True.
+        To handle the message create a response, call the assistant's `_send_assistant_chat_message()`
+        or `_stream_assistant_chat_message()` methods and return True. Don't forget to include the user
+        message in these calls! Return False or an agent code to hand-over to another agent.
         """
         persona_code = await self.determine_persona(msg, user)
 
@@ -107,7 +108,7 @@ class AgentBase(Generic[State]):
         """
         Update the agent's persistent state. Use this instead of directly mutating `self._state`,
         so that the change can be properly persisted without sending the whole state over the wire
-        after each chat message exchange. Direct changes to `self._state` will not be persisted!
+        after each chat message exchange. Direct changes to `self._state` will not be propagated!
 
         Parameters:
             path: Property to change (with dot and array notation, e.g. `"questions.answers[0]"`)
@@ -119,7 +120,7 @@ class AgentBase(Generic[State]):
             
             * `KeyError` is raised, when the path cannot be fully resolved.
         """
-        await self._manager.propagate_agent_update(
+        await self._assistant.propagate_agent_update(
             update = AgentUpdate(
                 agent = self.code,
                 path  = path,
@@ -149,15 +150,15 @@ class AgentBase(Generic[State]):
             * The activity title and status can be changed via the paths `"title"` and `"status"`,
               as defined in `ActivityState`.
         """
-        if not self._manager._current_activity:
+        if not self._assistant._current_activity:
             raise TypeError("No current activity found")
         
-        if self._manager._current_activity.agent != self.code:
-            raise TypeError(f"Agent {self.code} cannot update activities by agent {self._manager._current_activity.agent}")
+        if self._assistant._current_activity.agent != self.code:
+            raise TypeError(f"Agent {self.code} cannot update activities by agent {self._assistant._current_activity.agent}")
     
-        await self._manager.propagate_activity_update(
+        await self._assistant.propagate_activity_update(
             ActivityUpdate(
-                id     = self._manager._current_activity.id,
+                id     = self._assistant._current_activity.id,
                 path   = path,
                 value  = value,
             ),
@@ -170,19 +171,52 @@ class PersonaBase(Generic[Agent]):
     allowing for unique system prompts and parameters, while all personas share
     the agent's state.
     """
-    def __init__(self, agent: Agent, manager: "ChatManager"):
+    def __init__(self, agent: Agent, assistant: AIAssistant):
         """
         Constructor. Save reference to the parent agent.
         """
-        self._agent   = agent
-        self._manager = manager
+        self._agent     = agent
+        self._assistant = assistant
 
     async def process_chat_message(self, msg: UserChatMessage, user: User) -> ProcessChatMessageResult:
         """
         Respond to the given user message.
 
-        To handle the message create a response, call the manager's `_send_agent_response()`
-        or `_stream_agent_response()` methods and return True. Otherwise return False or an
-        agent code to hand-over to another agent.
+        To handle the message create a response, call the assistant's `_send_assistant_chat_message()`
+        or `_stream_assistant_chat_message()` methods and return True. Don't forget to include the user
+        message in these calls! Return False or an agent code to hand-over to another agent.
         """
         return False
+
+default_role_description = """
+    You are ELISA – an interactive learning tutor who supports students in their learning journey.
+
+    Role: Experienced assistant lecturer at schools and universities across diverse subjects. 
+
+    Goal: Teach and support each student individually to help them reach their full potential.
+
+    Backstory: Over the years, you’ve developed a student-centered teaching style. You believe
+    every learner can succeed and enjoy the process if met with empathy, encouragement, and the
+    right guidance.  
+
+    Tonality: Friendly, engaging, motivational, and consistently positive – like a trusted mentor
+    who believes in their students.TODO
+"""
+
+default_summary_message = """
+    Here is a summary of the conversation so far:
+    
+    <summary>
+        {memory.previous}
+    </summary>
+
+    Since then the following was additionally said:
+    
+    <messages>
+        {% for message in memory.messages %}
+        <message source="{{ message.source }}">
+            {{ message.content}}
+        </message>
+        {% endfor %}
+    </messages>
+"""

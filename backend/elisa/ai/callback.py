@@ -6,14 +6,12 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from abc    import ABC
-from abc    import abstractmethod
-from typing import Protocol
+from abc          import ABC
+from abc          import abstractmethod
 
 from .agent.types import ActivityUpdate
 from .agent.types import AgentUpdate
 from .types       import AssistantChatMessage
-from .types       import AssistantChatMessageContent
 from .types       import MemoryUpdate
 
 class ChatAgentCallback(ABC):
@@ -51,11 +49,3 @@ class ChatAgentCallback(ABC):
         accordingly and save the updated activity state in the persistent chat
         history, if the chat is saved on the client.
         """
-
-class FilterAssistantChatMessageContent(Protocol):
-    """
-    Callback function to modify partial message contents before they are streamed
-    out to the client.
-    """
-    async def __call__(self, msg: AssistantChatMessageContent) -> AssistantChatMessageContent:
-        ...

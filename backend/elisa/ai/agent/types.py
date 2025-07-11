@@ -78,11 +78,3 @@ This return value determines how the chat manager proceeds:
 
  - String: The message should be handed over to the agent with the given code.
 """
-
-# class AgentResponse(BaseModel):
-#     """
-#     Thin wrapper around an agent chat message to allow the agent to hand-over
-#     to another agent.
-#     """
-#     handover: str | None = None
-#     message: AgentChatMessage | None = None

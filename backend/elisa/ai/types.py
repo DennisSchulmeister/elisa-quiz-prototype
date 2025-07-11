@@ -10,6 +10,7 @@ from pydantic     import BaseModel
 from pydantic     import Field
 from typing       import Literal
 from typing       import List
+from uuid         import uuid4
 
 from .agent.types import ActivityCode
 from .agent.types import ActivityId
@@ -96,24 +97,26 @@ class ActivityMessageContent(BaseModel):
         
 class UserChatMessage(BaseModel):
     """
-    A single chat message sent from the user to the agent.
+    A single chat message sent from the user to the assistant.
     """
     source:  Literal["user"] = "user"
     content: SpeakMessageContent
 
 AssistantChatMessageContent = SystemMessageContent | SpeakMessageContent | ThinkMessageContent | ProcessMessageContent | ActivityMessageContent
-"""Allowed content types for agent chat messages"""
+"""Allowed content types for assistant chat messages"""
 
 class AssistantChatMessage(BaseModel):
     """
-    A single chat message as sent from the agent to the user.
+    A single chat message as sent from the assistant to the user.
     """
-    source: Literal["agent"] = "agent"
-    id: str
-    content: AssistantChatMessageContent
+    id:       str = Field(default_factory = lambda: str(uuid4()))
+    source:   Literal["assistant"] = "assistant"
+    agent:    AgentCode = ""
+    content:  AssistantChatMessageContent | None = None
+    finished: bool = True
 
 ChatMessage = UserChatMessage | AssistantChatMessage
-"""User or agent chat message"""
+"""User or assistant chat message"""
 
 class ConversationMemory(BaseModel):
     """
@@ -169,7 +172,7 @@ class ChatTitle(BaseModel):
     Distilled title of the chat conversation so far.
     """
     meaningful: bool = Field(
-        description = "Whether the conversation provides enough information for a meaningful title",
+        description = "Whether the conversation already allows to distill a descriptive title",
     )
 
     title: str = Field(
@@ -178,12 +181,24 @@ class ChatTitle(BaseModel):
 
 class GuardRailResult(BaseModel):
     """
-    Guard rail check of a received chat message to decide whether to pass it through.
+    Guard rail check of a user chat message to decide whether to pass it through.
     """
     reject: bool = Field(
         description = "Whether the message should be rejected"
     )
 
-    reasoning: str = Field(
+    explanation: str = Field(
         description = "Reasoning behind the classification"
+    )
+
+class ChooseAgentResult(BaseModel):
+    """
+    Agent which should handle a received user chat message.
+    """
+    agent_code: AgentCode | None = Field(
+        description = "Chosen agent to handle the user message"
+    )
+
+    question: str | None = Field(
+        description = "Question to the user in case multiple agents are suitable"
     )

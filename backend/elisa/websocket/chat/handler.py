@@ -10,8 +10,8 @@ from typing             import override
 
 from ...ai.agent.types  import ActivityUpdate
 from ...ai.agent.types  import AgentUpdate
+from ...ai.assistant    import AIAssistant
 from ...ai.callback     import ChatAgentCallback
-from ...ai.chat         import ChatManager
 from ...ai.types        import AssistantChatMessage
 from ...ai.types        import MemoryUpdate
 from ...ai.types        import UserChatMessage
@@ -34,15 +34,15 @@ class ChatHandler(ChatAgentCallback):
         Initialize client-bound handler instance.
         """
         self._parent = parent
-        self._manager: ChatManager | None = None
+        self._assistant: AIAssistant | None = None
     
     def notify(self, key: str, value):
         """
         Receive notification from analytics handler, whether the user allows to
         track the learning topics.
         """
-        if self._manager and key == "record_learning_topics":
-            self._manager.set_record_learning_topic(value)
+        if self._assistant and key == "record_learning_topics":
+            self._assistant.record_learning_topic = value
 
     @handle_message("start_chat", StartChat)
     async def handle_start_chat(self, start: StartChat, user: User, **kwargs):
@@ -52,7 +52,7 @@ class ChatHandler(ChatAgentCallback):
         if start.username and not start.username == user.subject:
             raise PermissionDenied()
         
-        self._manager = await ChatManager.create(
+        self._assistant = await AIAssistant.create(
             callback    = self,
             user        = user,
             thread_id   = start.thread_id,
@@ -65,32 +65,32 @@ class ChatHandler(ChatAgentCallback):
         """
         Process chat message sent by the user.
         """
-        if self._manager:
-            await self._manager.process_chat_message(msg, user)
+        if self._assistant:
+            await self._assistant.process_user_chat_message(msg, user)
     
     @handle_message("start_activity", StartActivity)
     async def handle_start_activity(self, start: StartActivity, user: User, **kwargs):
         """
         Start or resume an interactive activity.
         """
-        if self._manager:
-            await self._manager.start_activity(start.id)
+        if self._assistant:
+            await self._assistant.start_activity(start.id)
     
     @handle_message("activity_update", ActivityUpdate)
     async def handle_activity_update(self, update: ActivityUpdate, user: User, **kwargs):
         """
         Send activity update to the owning AI agent after modification by the user.
         """
-        if self._manager:
-            await self._manager.propagate_activity_update(update)
+        if self._assistant:
+            await self._assistant.propagate_activity_update(update)
 
     @handle_message("change_language", ChangeLanguage)
     async def handle_change_language(self, change: ChangeLanguage, **kwargs):
         """
         Remember new language for AI generated chat messages.
         """
-        if self._manager:
-            self._manager.set_language(change.language)
+        if self._assistant:
+            self._assistant.language = change.language
 
     @override
     async def send_assistant_chat_message(self, msg: AssistantChatMessage, **kwargs):
