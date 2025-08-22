@@ -6,15 +6,15 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from ....auth.user import User
-from ...types      import AssistantChatMessage
-from ...types      import UserChatMessage
-from ...types      import SpeakMessageContent
-from ..base        import AgentBase
-from ..base        import default_role_description
-from ..base        import default_summary_message
-from ..types       import ProcessChatMessageResult
-from .types        import DefaultState
+from ....auth.user     import User
+from ...shared.prompts import default_role_description
+from ...shared.prompts import default_summary_message
+from ...types          import AssistantChatMessage
+from ...types          import UserChatMessage
+from ...types          import SpeakMessageContent
+from ..base            import AgentBase
+from ..types           import ProcessChatMessageResult
+from .types            import DefaultState
 
 class DefaultAgent(AgentBase[DefaultState]):
     """
@@ -36,7 +36,7 @@ class DefaultAgent(AgentBase[DefaultState]):
 
         await self._assistant.stream_assistant_chat_message(
             assistant_message = AssistantChatMessage(),
-            partials          = self._assistant._client.chat.completions.create_partial(
+            partials          = self._assistant.client.chat.completions.create_partial(
                 messages = [
                     {
                         "role": "system", 
@@ -67,7 +67,7 @@ class DefaultAgent(AgentBase[DefaultState]):
         await self._assistant.stream_assistant_chat_message(
             user_message      = msg,
             assistant_message = AssistantChatMessage(),
-            partials          = self._assistant._client.chat.completions.create_partial(
+            partials          = self._assistant.client.chat.completions.create_partial(
                 messages = [
                     {
                         "role": "system", 
@@ -89,7 +89,7 @@ class DefaultAgent(AgentBase[DefaultState]):
                     }
                 ],
                 context = {
-                    "memory":   self._assistant._state.memory,
+                    "memory":   self._assistant.state.memory,
                     "language": self._assistant.language,
                 },
                 response_model = SpeakMessageContent,

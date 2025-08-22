@@ -139,7 +139,6 @@ class MemoryUpdate(BaseModel):
     """
     chat_title:   str = ""
     new_messages: List[ChatMessage]
-    short_term_n: int
     previous:     str
 
 class MessageHistory(BaseModel):
@@ -166,18 +165,6 @@ class ChatKey(BaseModel):
     """
     username:  str
     thread_id: str
-
-class ChatTitle(BaseModel):
-    """
-    Distilled title of the chat conversation so far.
-    """
-    meaningful: bool = Field(
-        description = "Whether the conversation already allows to distill a descriptive title",
-    )
-
-    title: str = Field(
-        description = "Clear, concise, and informative title for the conversation",
-    )
 
 class GuardRailResult(BaseModel):
     """

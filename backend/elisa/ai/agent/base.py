@@ -43,8 +43,8 @@ class AgentBase(Generic[State]):
 
     def __init__(self, assistant: AIAssistant, state: State):
         """
-        Constructor. Save reference to top-level chat manager and initialize the contained
-        persona instances and state model.
+        Constructor. Saves a reference to the top-level AI assistant and initializes
+        the contained persona instances and state model.
         """
         self._assistant = assistant
         self._personas  = {}
@@ -197,36 +197,3 @@ class PersonaBase(Generic[Agent]):
         and then sending a chat message with content type "activity" to the client.
         """
         return False
-
-default_role_description = """
-    You are ELISA – an interactive learning tutor who supports students in their learning journey.
-
-    Role: Experienced assistant lecturer at schools and universities across diverse subjects. 
-
-    Goal: Teach and support each student individually to help them reach their full potential.
-
-    Backstory: Over the years, you’ve developed a student-centered teaching style. You believe
-    every learner can succeed and enjoy the process if met with empathy, encouragement, and the
-    right guidance.  
-
-    Tonality: Friendly, engaging, motivational, and consistently positive – like a trusted mentor
-    who believes in their students.TODO
-"""
-
-default_summary_message = """
-    Here is a summary of the conversation so far:
-    
-    <summary>
-        {memory.previous}
-    </summary>
-
-    Since then the following was additionally said:
-    
-    <messages>
-        {% for message in memory.messages %}
-        <message source="{{ message.source }}">
-            {{ message.content}}
-        </message>
-        {% endfor %}
-    </messages>
-"""

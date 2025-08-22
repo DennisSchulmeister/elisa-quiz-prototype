@@ -14,21 +14,20 @@ from typing             import TYPE_CHECKING
 
 from ..auth.user        import User
 from ..database.user.db import UserDatabase
-from .agent.all         import default_agent_code
-from .agent.all         import get_all_agent_classes
-from .agent.all         import get_all_agents_prompt
-from .agent.base        import default_role_description
-from .agent.base        import default_summary_message
+from .agent.registry    import AgentRegistry
 from .agent.types       import ActivityId
 from .agent.types       import ActivityState
 from .agent.types       import ActivityUpdate
 from .agent.types       import AgentCode
 from .agent.types       import AgentUpdate
 from .callback          import ChatAgentCallback
+from .shared.prompts    import default_role_description
+from .shared.prompts    import default_summary_message
+from .summary.registry  import SummarizerRegistry
+from .title.registry    import TitleGeneratorRegistry
 from .types             import AssistantChatMessage
 from .types             import ChatKey
 from .types             import ChatMessage
-from .types             import ChatTitle
 from .types             import ChooseAgentResult
 from .types             import ConversationMemory
 from .types             import GuardRailResult
@@ -49,14 +48,12 @@ class AIAssistant:
     mediates between internal AI agents that process the user messages.
     """
 
+    # TODO: Configuration options
     MAX_MESSAGE_SIZE = 25000
     """Maximum allowed characters for user chat messages"""
 
     MAX_ROUTING_TRIES = 5
     """Maximum attempts to route a user chat message to an agent implementation"""
-
-    SHORT_TERM_N = 10
-    """Number of recent messages kept verbatim before summarizing"""
 
     # ================================
     # Initialization at server startup
@@ -67,7 +64,7 @@ class AIAssistant:
         """
         Create the LLM client object during server startup.
         """
-        cls._client = instructor.from_provider(
+        cls.client = instructor.from_provider(
             model = os.environ.get("ELISA_LLM_CHAT_MODEL", "openai/gpt-4.1"),
             async_client = True,
             **json.loads(os.environ.get("ELISA_LLM_KWARGS", "{}"))
@@ -97,20 +94,21 @@ class AIAssistant:
         """
         self.record_learning_topic = False
         self.language              = "en"
+        self.user                  = user
+        self.state                 = state
 
-        self._callback             = callback
-        self._user                 = user
-        self._thread_id            = thread_id
-        self._persistence          = persistence
-        self._state                = state
-        self._all_agents_prompt    = get_all_agents_prompt()
+        self._callback        = callback
+        self._thread_id       = thread_id
+        self._persistence     = persistence
+        self._summarizer      = SummarizerRegistry.Summarizer(assistant=self)
+        self._title_generator = TitleGeneratorRegistry.TitleGenerator(assistant=self)
         
-        self._agents: "dict[AgentCode, AgentBase]" = {agent.code: agent(self) for agent in get_all_agent_classes()}
+        self._agents: "dict[AgentCode, AgentBase]" = {agent.code: agent(assistant=self) for agent in AgentRegistry.get_all_agent_classes()}
 
         for code, agent in self._agents.items():
             # Note that self._state.agents is only ever used here 
-            if code in self._state.agents:
-                agent._state = agent._state.model_validate(self._state.agents[code])
+            if code in self.state.agents:
+                agent._state = agent._state.model_validate(self.state.agents[code])
 
         self._current_agent = self._agents["default"]
         self._current_activity: ActivityState | None = None
@@ -157,7 +155,7 @@ class AIAssistant:
                     activities = {},
                 )
 
-        manager = cls(
+        instance = cls(
             callback    = callback,
             user        = user,
             thread_id   = thread_id or str(uuid.uuid4()),
@@ -165,16 +163,16 @@ class AIAssistant:
             state       = state,
         )
 
-        default_agent: "DefaultAgent" = cast("DefaultAgent", manager._agents["default"])
+        default_agent: "DefaultAgent" = cast("DefaultAgent", instance._agents["default"])
         await default_agent.greet_user()
-        return manager
+        return instance
     
     @property
     def chat_key(self):
         """
         Create `ChatKey` instance for database access.
         """
-        return ChatKey(username=self._user.subject, thread_id=self._thread_id)
+        return ChatKey(username=self.user.subject, thread_id=self._thread_id)
 
     @property
     def persistence_client(self):
@@ -205,11 +203,12 @@ class AIAssistant:
         5. Reroute message up to N times, when requested by the agent
         """
         # Reject too large message
+        # TODO: List of strategy objects to validate incoming messages (size, content, guard_rails, ...)
         if len(msg.content.speak) > self.MAX_MESSAGE_SIZE:
             return await self.stream_assistant_chat_message(
                 propagate         = False,
                 assistant_message = AssistantChatMessage(),
-                partials          = self._client.chat.completions.create_partial(
+                partials          = self.client.chat.completions.create_partial(
                     messages = [
                         {
                             "role": "system", 
@@ -232,7 +231,7 @@ class AIAssistant:
                         }
                     ],
                     context = {
-                        "memory":   self._state.memory,
+                        "memory":   self.state.memory,
                         "language": self.language,
                     },
                     response_model = SpeakMessageContent,
@@ -240,7 +239,8 @@ class AIAssistant:
             )
 
         # Reject inappropriate message
-        guard_rail = await self._client.chat.completions.create(
+        # TODO: Strategy object
+        guard_rail = await self.client.chat.completions.create(
             messages = [
                 {
                     "role": "system",
@@ -287,6 +287,7 @@ class AIAssistant:
 
         for _ in range(self.MAX_ROUTING_TRIES):
             if not chosen_agent_code:
+                # TODO: Strategy object
                 if self._current_agent:
                     current_agent = f"""
                     <agent>
@@ -308,7 +309,7 @@ class AIAssistant:
                     </activity>
                     """
 
-                choose_agent = await self._client.chat.completions.create(
+                choose_agent = await self.client.chat.completions.create(
                     messages = [
                         {
                             "role": "system",
@@ -369,12 +370,12 @@ class AIAssistant:
                         }
                     ],
                     context = {
-                        "default_agent":    default_agent_code,
+                        "default_agent":    AgentRegistry.default_agent_code,
                         "current_agent":    current_agent,
                         "current_activity": current_activity,
-                        "all_agents":       self._all_agents_prompt,
+                        "all_agents":       AgentRegistry.get_all_agents_prompt(),
                         "language":         self.language,
-                        "memory":           self._state.memory,
+                        "memory":           self.state.memory,
                     },
                     response_model = ChooseAgentResult,
                 )
@@ -387,7 +388,7 @@ class AIAssistant:
                     ))
                 
             if not chosen_agent_code or not chosen_agent_code in self._agents:
-                chosen_agent_code = default_agent_code
+                chosen_agent_code = AgentRegistry.default_agent_code
 
             if self._current_activity and not self._current_activity.agent == chosen_agent_code:
                 # Pause current activity when another agent was chosen
@@ -434,7 +435,7 @@ class AIAssistant:
             ))
         
         try:
-            self._current_activity = self._state.activities[activity_id]
+            self._current_activity = self.state.activities[activity_id]
         except KeyError:
             return
     
@@ -453,7 +454,7 @@ class AIAssistant:
             To insert a new activity call `create_activity()`. Internally it propagates an
             activity update with an empty path and the full activity as value.
         """
-        activity = self._state.activities[update.id]
+        activity = self.state.activities[update.id]
 
         if not activity and update.path:
             raise KeyError(f"Activity not found: {update.id}")
@@ -463,7 +464,7 @@ class AIAssistant:
             _apply_update(activity, update.path, update.value)
         else:
             # Insert new activity
-            self._state.activities[update.id] = update.value
+            self.state.activities[update.id] = update.value
 
         if self.persistence_server:
             await UserDatabase.apply_activity_update(self.chat_key, update)
@@ -493,139 +494,26 @@ class AIAssistant:
         """
         Add chat message to the conversation memory and chat history.
         """
-        # Update conversation memory and summary
+        # Update conversation memory
         _messages: list[ChatMessage] = [message for message in messages if message]
 
         for message in _messages:
-            self._state.memory.messages.append(message)
-
-        summary_messages = self._state.memory.messages[:-self.SHORT_TERM_N]
-        self._state.memory.messages = self._state.memory.messages[-self.SHORT_TERM_N:]
-
-        if summary_messages:
-            role_description = """
-                You are an experienced minute-taker.
-
-                Role: Active meeting participant responsible for writing concise and
-                accurate minutes.  
-
-                Goal: Summarize the previous conversation compactly without losing essential
-                information or nuance.  
-
-                Backstory: As a professional writer with extensive experience in documenting
-                interviews and dialogues, you know how to distill conversations into clear,
-                structured summaries that remain faithful to the original.  
-
-                Tone: Neutral, precise, and focused – like a diligent observer capturing what
-                matters most.
-            """
-
-            user_message = """
-                Task: Update the meeting minutes and summarize the previous conversation.
-
-                Expected Output: A clear summary of all previous contributions, compact yet
-                faithful to the original.
-
-                Previous summary:
-                
-                <summary>
-                    {{ previous }}
-                </summary>
-
-                What was said since then:
-                
-                <messages>
-                    {% for message in messages %}
-                    <message source="{{ message.source }}">
-                        {{ message.content}}
-                    </message>
-                    {% endfor %}
-                </messages>
-
-                Language: Please respond in <language_code>{{ language }}</language_code>.
-            """
-            response = await self._client.chat.completions.create(
-                messages = [
-                    {"role": "system", "content": role_description},
-                    {"role": "user",   "content": user_message},
-                ],
-                context        = {
-                    "previous": self._state.memory.previous,
-                    "messages": summary_messages,
-                    "language": self.language,
-                },
-                response_model = SpeakMessageContent,                
-            )
-
-            self._state.memory.previous = response.speak
+            self.state.memory.messages.append(message)
+        
+        await self._summarizer.compress_memory()
         
         # Add missing conversation title
-        if not self._state.title:
-            role_description = """
-                You are a professional title editor.
+        if not self.state.title:
+            chat_title = await self._title_generator.suggest_title()
 
-                Role: Meeting participant tasked with titling the conversation.  
-                
-                Goal: Distill the core of the previous conversation into a short,
-                descriptive, and memorable title.  
-                
-                Backstory: With a background in editorial work and content curation,
-                you excel at capturing the essence of discussions in just a few words.  
-                
-                Tone: Clear, concise, and informative – like a headline that quickly
-                tells readers what the conversation was about.
-            """
-
-            conversation_summary = """
-                What was said so far:
-                
-                {% if previous %}
-                <summary>
-                    {{ memory.previous }}
-                </summary>
-                {% endif %}
-
-                <messages>
-                    {% for message in memory.messages %}
-                    <message source="{{ message.source }}">
-                        {{ message.content}}
-                    </message>
-                    {% endfor %}
-                </messages>
-            """
-
-            user_message = """
-                Task: Write a title for the conversation.
-
-                Expected Output: A short yet informative headline.
-
-                Constraint: Only provide a title, if I have at least stated my learning interest.
-
-                Language: Please respond in <language_code>{{ language }}</language_code>.
-            """
-
-            response = await self._client.chat.completions.create(
-                messages = [
-                    {"role": "system", "content": role_description},
-                    {"role": "system", "content": conversation_summary},
-                    {"role": "user",   "content": user_message},
-                ],
-                context = {
-                    "memory":   self._state.memory,
-                    "language": self.language,
-                },
-                response_model = ChatTitle,
-            )
-
-            if response.meaningful and response.title:
-                self._state.title = response.title
+            if chat_title.meaningful and chat_title.title:
+                self.state.title = chat_title.title
 
         # Propagate memory update
         update = MemoryUpdate(
             new_messages = _messages,
-            short_term_n = self.SHORT_TERM_N,
-            previous     = self._state.memory.previous,
-            chat_title   = self._state.title,
+            previous     = self.state.memory.previous,
+            chat_title   = self.state.title,
         )
 
         if self.persistence_server:
@@ -658,6 +546,8 @@ class AIAssistant:
             the return value of `self._client.chat.completions.create_partial()`.
 
             user_message: Triggering user message to fully update the memory and chat history
+
+            propagate: Save messages in the conversation memory
         """
         assistant_message.finished = False
 
@@ -685,6 +575,7 @@ class AIAssistant:
         Parameters:
             assistant_message: Assistant message to sent to the client
             user_message: Triggering user message to fully update the memory and chat history
+            propagate: Save messages in the conversation memory
         """
         assistant_message.finished = True
         await self._callback.send_assistant_chat_message(assistant_message)
