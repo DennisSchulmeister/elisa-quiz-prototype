@@ -6,11 +6,11 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from typing            import override
-from typing            import TYPE_CHECKING
+from typing             import override
+from typing             import TYPE_CHECKING
 
-from ...shared.prompts import default_summary_message
-from ..base            import TitleGeneratorBase
+from ...shared.messages import default_summary_message
+from ..base             import TitleGeneratorBase
 
 if TYPE_CHECKING:
     from ..types import ChatTitle

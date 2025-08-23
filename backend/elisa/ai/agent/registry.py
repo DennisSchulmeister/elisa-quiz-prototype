@@ -32,7 +32,7 @@ class AgentRegistry:
         ]
 
     @classmethod
-    def get_all_agents_prompt(cls):
+    def get_all_agents_message(cls):
         """
         Return a string that describes all available agents to the LLM.
         """

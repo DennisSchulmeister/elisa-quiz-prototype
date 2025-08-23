@@ -177,15 +177,3 @@ class GuardRailResult(BaseModel):
     explanation: str = Field(
         description = "Reasoning behind the classification"
     )
-
-class ChooseAgentResult(BaseModel):
-    """
-    Agent which should handle a received user chat message.
-    """
-    agent_code: AgentCode | None = Field(
-        description = "Chosen agent to handle the user message"
-    )
-
-    question: str | None = Field(
-        description = "Question to the user in case multiple agents are suitable"
-    )

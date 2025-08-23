@@ -11,6 +11,7 @@ from fastapi                       import FastAPI
 from fastapi                       import WebSocket
 
 from .ai.assistant                 import AIAssistant
+from .ai.router.registry           import AgentRouterRegistry
 from .ai.summary.registry          import SummarizerRegistry
 from .ai.title.registry            import TitleGeneratorRegistry
 from .auth.user                    import User
@@ -24,11 +25,12 @@ from .websocket.user.handler       import UserHandler
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Start-up code before handling requests    
-    AIAssistant.create_client()
+    AIAssistant.read_config()
     
-    User.read_config()
+    AgentRouterRegistry.read_config()
     SummarizerRegistry.read_config()
     TitleGeneratorRegistry.read_config()
+    User.read_config()
 
     ParentWebsocketHandler.add_handler(AnalyticsHandler)
     ParentWebsocketHandler.add_handler(ChatHandler)

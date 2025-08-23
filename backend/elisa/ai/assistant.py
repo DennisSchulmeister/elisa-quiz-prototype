@@ -8,34 +8,34 @@
 
 import instructor, json, os, uuid
 
-from typing             import AsyncGenerator
-from typing             import cast
-from typing             import TYPE_CHECKING
+from typing              import AsyncGenerator
+from typing              import cast
+from typing              import TYPE_CHECKING
 
-from ..auth.user        import User
-from ..database.user.db import UserDatabase
-from .agent.registry    import AgentRegistry
-from .agent.types       import ActivityId
-from .agent.types       import ActivityState
-from .agent.types       import ActivityUpdate
-from .agent.types       import AgentCode
-from .agent.types       import AgentUpdate
-from .callback          import ChatAgentCallback
-from .shared.prompts    import default_role_description
-from .shared.prompts    import default_summary_message
-from .summary.registry  import SummarizerRegistry
-from .title.registry    import TitleGeneratorRegistry
-from .types             import AssistantChatMessage
-from .types             import ChatKey
-from .types             import ChatMessage
-from .types             import ChooseAgentResult
-from .types             import ConversationMemory
-from .types             import GuardRailResult
-from .types             import MemoryUpdate
-from .types             import PersistedState
-from .types             import PersistenceStrategy
-from .types             import SpeakMessageContent
-from .types             import UserChatMessage
+from ..auth.user         import User
+from ..database.user.db  import UserDatabase
+from .agent.registry     import AgentRegistry
+from .agent.types        import ActivityId
+from .agent.types        import ActivityState
+from .agent.types        import ActivityUpdate
+from .agent.types        import AgentCode
+from .agent.types        import AgentUpdate
+from .callback           import ChatAgentCallback
+from .router.registry    import AgentRouterRegistry
+from .shared.messages    import default_role_description
+from .shared.messages    import default_summary_message
+from .summary.registry   import SummarizerRegistry
+from .title.registry     import TitleGeneratorRegistry
+from .types              import AssistantChatMessage
+from .types              import ChatKey
+from .types              import ChatMessage
+from .types              import ConversationMemory
+from .types              import GuardRailResult
+from .types              import MemoryUpdate
+from .types              import PersistedState
+from .types              import PersistenceStrategy
+from .types              import SpeakMessageContent
+from .types              import UserChatMessage
 
 if TYPE_CHECKING:
     from .agent.base          import AgentBase
@@ -52,7 +52,7 @@ class AIAssistant:
     MAX_MESSAGE_SIZE = 25000
     """Maximum allowed characters for user chat messages"""
 
-    MAX_ROUTING_TRIES = 5
+    max_routing_tries = -1
     """Maximum attempts to route a user chat message to an agent implementation"""
 
     # ================================
@@ -60,14 +60,28 @@ class AIAssistant:
     # ================================
 
     @classmethod
-    def create_client(cls):
+    def read_config(cls):
         """
         Create the LLM client object during server startup.
         """
+        llm_chat_model    = os.environ.get("ELISA_LLM_CHAT_MODEL", "openai/gpt-4.1")
+        llm_kwargs_str    = os.environ.get("ELISA_LLM_KWARGS", "{}")
+        max_routing_tries = os.environ.get("ELISA_AGENT_ROUTER_TRIES", "5")
+
+        try:
+            llm_kwargs_dict = json.loads(llm_kwargs_str)
+        except json.decoder.JSONDecodeError:
+            raise ValueError(f"ELISA_LLM_KWARGS - Malformed JSON data: {llm_kwargs_str}")
+
+        try:
+            cls.max_routing_tries = int(max_routing_tries)
+        except ValueError:
+            raise ValueError(f"ELISA_AGENT_ROUTER_TRIES - Must be integer: {max_routing_tries}")
+
         cls.client = instructor.from_provider(
-            model = os.environ.get("ELISA_LLM_CHAT_MODEL", "openai/gpt-4.1"),
+            model        = llm_chat_model,
             async_client = True,
-            **json.loads(os.environ.get("ELISA_LLM_KWARGS", "{}"))
+            **llm_kwargs_dict
         )
 
     #============================================
@@ -92,26 +106,29 @@ class AIAssistant:
             persistence: Persistence strategy of the chat
             state:       Restored chat state, when saved on the client
         """
+        # Semi-public properties
         self.record_learning_topic = False
         self.language              = "en"
         self.user                  = user
         self.state                 = state
 
-        self._callback        = callback
-        self._thread_id       = thread_id
-        self._persistence     = persistence
-        self._summarizer      = SummarizerRegistry.Summarizer(assistant=self)
-        self._title_generator = TitleGeneratorRegistry.TitleGenerator(assistant=self)
-        
-        self._agents: "dict[AgentCode, AgentBase]" = {agent.code: agent(assistant=self) for agent in AgentRegistry.get_all_agent_classes()}
+        self.agents: "dict[AgentCode, AgentBase]" = {agent.code: agent(assistant=self) for agent in AgentRegistry.get_all_agent_classes()}
 
-        for code, agent in self._agents.items():
+        for code, agent in self.agents.items():
             # Note that self._state.agents is only ever used here 
             if code in self.state.agents:
                 agent._state = agent._state.model_validate(self.state.agents[code])
 
-        self._current_agent = self._agents["default"]
-        self._current_activity: ActivityState | None = None
+        self.current_agent = self.agents["default"]
+        self.current_activity: ActivityState | None = None
+
+        # Internal properties
+        self._callback        = callback
+        self._thread_id       = thread_id
+        self._persistence     = persistence
+        self._agent_router    = AgentRouterRegistry.AgentRouter(assistant=self)
+        self._summarizer      = SummarizerRegistry.Summarizer(assistant=self)
+        self._title_generator = TitleGeneratorRegistry.TitleGenerator(assistant=self)
 
     @classmethod
     async def create(
@@ -163,7 +180,7 @@ class AIAssistant:
             state       = state,
         )
 
-        default_agent: "DefaultAgent" = cast("DefaultAgent", instance._agents["default"])
+        default_agent: "DefaultAgent" = cast("DefaultAgent", instance.agents["default"])
         await default_agent.greet_user()
         return instance
     
@@ -278,134 +295,43 @@ class AIAssistant:
             )
 
         # Route message to agent
-        chosen_agent_code = ""
-        current_agent     = ""
-        current_activity  = ""
+        next_agent_code  = ""
 
-        if self._current_activity and self._current_activity.status == "running":
-            chosen_agent_code = self._current_activity.agent
+        if self.current_activity and self.current_activity.status == "running":
+            next_agent_code = self.current_activity.agent
 
-        for _ in range(self.MAX_ROUTING_TRIES):
-            if not chosen_agent_code:
-                # TODO: Strategy object
-                if self._current_agent:
-                    current_agent = f"""
-                    <agent>
-                        <agent_code>{self._current_agent.code}<agent_code>
-                        <description>{self._current_agent.__doc__}</description>
-                    </agent>
-                    """
+        for _ in range(self.max_routing_tries):
+            # Choose next agent
+            if not next_agent_code:
+                next_agent = await self._agent_router.choose_agent(msg)
 
-                if self._current_activity:
-                    _agent = self._agents[self._current_activity.agent]
-                    _description = _agent.activities[self._current_activity.activity] if _agent else ""
-
-                    current_activity = f"""
-                    <activity>
-                        <agent_code>{self._current_activity.agent}</agent_code>
-                        <activity_code>{self._current_activity.activity}</activity_code>
-                        <title>{self._current_activity.title}</title>
-                        <description>{_description}</description>
-                    </activity>
-                    """
-
-                choose_agent = await self.client.chat.completions.create(
-                    messages = [
-                        {
-                            "role": "system",
-                            "content": """
-                                You are an expert agent router.
-
-                                Role: Triage agent responsible for routing user messages for optimum results.
-
-                                Goal: Decide which agent is best suited to handle the incoming message.  
-                            """,
-                        }, {
-                            "role": "system",
-                            "content": default_summary_message,
-                        }, {
-                            "role": "system",
-                            "content": """
-                                Task: Review the user's message and select the most appropriate agent from the
-                                provided list, based on each agent's description and supported learning activities.
-                                
-                                Instructions:
-                                
-                                {% if current_agent %}
-                                * Consider both the current message and recent conversation context to make an
-                                  informed decision. If unsure, prefer the currently active agent.
-                                {% else %}
-                                * Consider both the current message and recent conversation context to make an
-                                  informed decision.
-                                {% endif %}
-
-                                {% if current_activity %}
-                                * If multiple agents are suitable and the message suggests interest in choosing
-                                  a different activity, ask the user to choose between the relevant options.
-                                {% else %}
-                                * If multiple agents are suitable, ask the user to choose between the relevant options.
-                                {% endif %}
-
-                                * If no clear match is found, choose the fallback agent named "{{ default_agent }}".
-
-                                Available Agents: {{ all_agents }}
-
-                                {% if current_agent %}
-                                Current Agent:
-                                
-                                {{ current_agent }}
-                                {% endif %}
-
-                                {% if current_activity %}
-                                Current Activity:
-                                
-                                {{ current_activity }}
-                                {% endif %}
-
-                                Language: Please respond in <language_code>{{ language }}</language_code>.
-                            """,
-                        }, {
-                            "role": "user",
-                            "content": msg.content.speak,
-                        }
-                    ],
-                    context = {
-                        "default_agent":    AgentRegistry.default_agent_code,
-                        "current_agent":    current_agent,
-                        "current_activity": current_activity,
-                        "all_agents":       AgentRegistry.get_all_agents_prompt(),
-                        "language":         self.language,
-                        "memory":           self.state.memory,
-                    },
-                    response_model = ChooseAgentResult,
-                )
-
-                if choose_agent.agent_code:
-                    chosen_agent_code = choose_agent.agent_code
-                elif choose_agent.question:
+                if next_agent.agent_code:
+                    next_agent_code = next_agent.agent_code
+                elif next_agent.question:
                     return await self.send_assistant_chat_message(AssistantChatMessage(
-                        content = SpeakMessageContent(speak=choose_agent.question),
+                        content = SpeakMessageContent(speak=next_agent.question),
                     ))
                 
-            if not chosen_agent_code or not chosen_agent_code in self._agents:
-                chosen_agent_code = AgentRegistry.default_agent_code
+            if not next_agent_code or not next_agent_code in self.agents:
+                next_agent_code = AgentRegistry.default_agent_code
 
-            if self._current_activity and not self._current_activity.agent == chosen_agent_code:
-                # Pause current activity when another agent was chosen
-                if self._current_activity.status == "running":
-                    self._current_activity.status = "paused"
+            # Pause current activity when another agent was chosen
+            if self.current_activity and not self.current_activity.agent == next_agent_code:
+                if self.current_activity.status == "running":
+                    self.current_activity.status = "paused"
                 
-                self._current_activity = None
+                self.current_activity = None
 
-            agent = self._agents[chosen_agent_code]
-            result = await agent.process_chat_message(msg, user)
+            # Let agent handle the message
+            self.current_agent = self.agents[next_agent_code]
+            result = await self.current_agent.process_chat_message(msg, user)
 
             if result == True:
                 break
             elif result == False:
-                chosen_agent_code = ""
+                next_agent_code = ""
             else:
-                chosen_agent_code = result
+                next_agent_code = result
 
     #=============================
     # Propagation of state updates
@@ -427,20 +353,20 @@ class AIAssistant:
         must already have been created by calling `propagate_activity_update()` with an update
         object that contains the initial activity state and no path.
         """
-        if self._current_activity and self._current_activity.status == "running":
+        if self.current_activity and self.current_activity.status == "running":
             await self.propagate_activity_update(ActivityUpdate(
-                id    = self._current_activity.id,
+                id    = self.current_activity.id,
                 path  = "status",
                 value = "paused"
             ))
         
         try:
-            self._current_activity = self.state.activities[activity_id]
+            self.current_activity = self.state.activities[activity_id]
         except KeyError:
             return
     
         await self.propagate_activity_update(ActivityUpdate(
-            id    = self._current_activity.id,
+            id    = self.current_activity.id,
             path  = "status",
             value = "running"
         ))
@@ -477,7 +403,7 @@ class AIAssistant:
         Distribute and process and update to an agent's state. This mutates the agent state
         in memory and persists the change.
         """
-        agent = self._agents[update.agent]
+        agent = self.agents[update.agent]
 
         if not agent:
             raise KeyError(f"Agent not found: {update.agent}")

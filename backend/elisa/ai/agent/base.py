@@ -157,15 +157,15 @@ class AgentBase(Generic[State]):
             * The activity title and status can be changed via the paths `"title"` and `"status"`,
               as defined in `ActivityState`.
         """
-        if not self._assistant._current_activity:
+        if not self._assistant.current_activity:
             raise TypeError("No current activity found")
         
-        if self._assistant._current_activity.agent != self.code:
-            raise TypeError(f"Agent {self.code} cannot update activities by agent {self._assistant._current_activity.agent}")
+        if self._assistant.current_activity.agent != self.code:
+            raise TypeError(f"Agent {self.code} cannot update activities by agent {self._assistant.current_activity.agent}")
     
         await self._assistant.propagate_activity_update(
             ActivityUpdate(
-                id     = self._assistant._current_activity.id,
+                id     = self._assistant.current_activity.id,
                 path   = path,
                 value  = value,
             ),
