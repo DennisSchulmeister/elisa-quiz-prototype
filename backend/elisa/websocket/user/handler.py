@@ -6,6 +6,8 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
+from __future__             import annotations
+
 from ...ai.types            import ChatKey
 from ...auth.exceptions     import PermissionDenied
 from ...auth.user           import User

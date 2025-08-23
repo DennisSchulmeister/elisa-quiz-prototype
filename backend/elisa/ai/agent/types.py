@@ -6,11 +6,12 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from pydantic import BaseModel
-from pydantic import Field
-from typing   import Any
-from typing   import Literal
-from uuid     import uuid4
+from __future__ import annotations
+from pydantic   import BaseModel
+from pydantic   import Field
+from typing     import Any
+from typing     import Literal
+from uuid       import uuid4
 
 AgentCode = str
 """Unique short-code to distinguish agent types"""

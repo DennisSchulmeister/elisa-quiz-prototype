@@ -6,6 +6,8 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
+from __future__ import annotations
+
 default_role_description = """
     You are ELISA – an interactive learning tutor who supports students in their learning journey.
 

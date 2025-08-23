@@ -6,8 +6,9 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from typing   import Any, Callable, Optional, Type
-from pydantic import BaseModel
+from __future__ import annotations
+from typing     import Any, Callable, Optional, Type
+from pydantic   import BaseModel
 
 def websocket_handler(cls: Type[Any]) -> Type[Any]:
     """

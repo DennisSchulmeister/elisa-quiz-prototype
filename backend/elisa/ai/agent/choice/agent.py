@@ -6,8 +6,10 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from ..base  import AgentBase
-from ..types import Stateless
+from __future__ import annotations
+
+from ..base     import AgentBase
+from ..types    import Stateless
 
 class ChoiceAgent(AgentBase[Stateless]):
     """

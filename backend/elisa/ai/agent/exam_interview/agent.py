@@ -6,9 +6,11 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from ..base import AgentBase
-from .types import ExamInterviewActivity
-from .types import ExamInterviewState
+from __future__ import annotations
+
+from ..base     import AgentBase
+from .types     import ExamInterviewActivity
+from .types     import ExamInterviewState
 
 class ExamInterviewAgent(AgentBase[ExamInterviewState]):
     """

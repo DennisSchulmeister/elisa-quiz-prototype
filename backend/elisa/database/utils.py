@@ -6,6 +6,8 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
+from __future__ import annotations
+
 import datetime, os, pymongo
 
 mongodb_url = os.environ.get("ELISA_MONGODB_URL", "mongodb://localhost:27017")

@@ -6,8 +6,9 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from pydantic import BaseModel
-from pydantic import Field
+from __future__ import annotations
+from pydantic   import BaseModel
+from pydantic   import Field
 
 class ChatTitle(BaseModel):
     """

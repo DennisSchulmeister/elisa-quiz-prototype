@@ -6,7 +6,9 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
+from __future__        import annotations
 from pydantic          import BaseModel
+
 from ...ai.agent.types import ActivityId
 from ...ai.types       import PersistedState
 from ...ai.types       import PersistenceStrategy

@@ -6,10 +6,11 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from typing  import override
+from __future__ import annotations
+from typing     import override
 
-from ..base  import SummarizerBase
-from ..types import MessageSummary
+from ..base     import SummarizerBase
+from ..types    import MessageSummary
 
 class DefaultSummarizer(SummarizerBase):
     """

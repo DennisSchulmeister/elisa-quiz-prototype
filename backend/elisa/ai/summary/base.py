@@ -6,11 +6,12 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from abc       import ABC
-from abc       import abstractmethod
-from typing    import TYPE_CHECKING
+from __future__ import annotations
+from abc        import ABC
+from abc        import abstractmethod
+from typing     import TYPE_CHECKING
 
-from ...shared import ReadConfigMixin
+from ...shared  import ReadConfigMixin
 
 if TYPE_CHECKING:
     from ..assistant import AIAssistant

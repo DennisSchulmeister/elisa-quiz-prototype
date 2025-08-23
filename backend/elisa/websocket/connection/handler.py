@@ -6,6 +6,8 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
+from __future__   import annotations
+
 from ..decorators import handle_message
 from ..decorators import websocket_handler
 from ..parent     import ParentWebsocketHandler
