@@ -6,13 +6,25 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-class AgentRegistry:
+from typing    import override
+from ...shared import ReadConfigMixin
+
+class AgentRegistry(ReadConfigMixin):
     """
     Dynamic class registry for AI agents.
     """
 
     default_agent_code = "default-agent"
     """Code of the default agent to use when no more specialized agent is found"""
+
+    @override
+    @classmethod
+    def read_config(cls):
+        """
+        Read configuration values at server start-up.
+        """
+        for agent_class in cls.get_all_agent_classes():
+            agent_class.read_config()
 
     @classmethod
     def get_all_agent_classes(cls):

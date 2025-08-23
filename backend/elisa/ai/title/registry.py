@@ -25,7 +25,9 @@ class TitleGeneratorRegistry:
         strategy = os.environ.get("ELISA_TITLE_GENERATOR", "default")
 
         if strategy == "default":
-            from .default.title import DefaultTitleGenerator
+            from .impl.default import DefaultTitleGenerator
             cls.TitleGenerator = DefaultTitleGenerator
         else:
             raise KeyError(f"ELISA_TITLE_GENERATOR - Invalid value: {strategy}")
+    
+        cls.TitleGenerator.read_config()

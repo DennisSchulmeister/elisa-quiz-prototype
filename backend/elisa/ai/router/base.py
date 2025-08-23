@@ -6,16 +6,18 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from abc    import ABC
-from abc    import abstractmethod
-from typing import TYPE_CHECKING
+from abc       import ABC
+from abc       import abstractmethod
+from typing    import TYPE_CHECKING
+
+from ...shared import ReadConfigMixin
 
 if TYPE_CHECKING:
     from ..assistant import AIAssistant
     from ..types     import UserChatMessage
     from .types      import ChooseAgentResult
 
-class AgentRouterBase(ABC):
+class AgentRouterBase(ABC, ReadConfigMixin):
     """
     Base class for agent router implementations. The agent router (there can only be
     one per conversation) decides which agent should handle an incoming user message
@@ -32,8 +34,7 @@ class AgentRouterBase(ABC):
     @abstractmethod
     async def choose_agent(self, msg: "UserChatMessage") -> "ChooseAgentResult":
         """
-        Inspect message summary, which already contains the current user message, and
-        decide which agent should handle it.
+        Inspect the given user message and decide which agent should handle it.
         """
     
     def _get_current_agent_message(self) -> str:

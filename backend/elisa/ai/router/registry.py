@@ -25,7 +25,9 @@ class AgentRouterRegistry:
         strategy = os.environ.get("ELISA_AGENT_ROUTER", "default")
 
         if strategy == "default":
-            from .default.router import DefaultAgentRouter
+            from .impl.default import DefaultAgentRouter
             cls.AgentRouter = DefaultAgentRouter
         else:
             raise KeyError(f"ELISA_AGENT_ROUTER - Invalid value: {strategy}")
+
+        cls.AgentRouter.read_config()

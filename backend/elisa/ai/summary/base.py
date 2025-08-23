@@ -6,14 +6,16 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from abc    import ABC
-from abc    import abstractmethod
-from typing import TYPE_CHECKING
+from abc       import ABC
+from abc       import abstractmethod
+from typing    import TYPE_CHECKING
+
+from ...shared import ReadConfigMixin
 
 if TYPE_CHECKING:
     from ..assistant import AIAssistant
 
-class SummarizerBase(ABC):
+class SummarizerBase(ABC, ReadConfigMixin):
     """
     Base class for conversation summarizer implementations. The conversation summarizer
     (there can only be one per conversation) compresses the message history to save bandwidth

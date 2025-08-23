@@ -12,12 +12,16 @@ from pymongo.asynchronous.collection import AsyncCollection
 
 from ...ai.agent.types               import ActivityUpdate
 from ...ai.agent.types               import AgentUpdate
+from ...ai.guard.types               import GuardRailResult
 from ...ai.types                     import MemoryUpdate
+from ...ai.types                     import UserChatMessage
 from ...database.utils               import now
 from ..utils                         import mongo_client
 from .types                          import Chat
 from .types                          import ChatKey
 from .types                          import ChatShort
+from .types                          import FlaggedMessage
+from .types                          import FlaggedMessageFilter
 
 class UserDatabase:
     """
@@ -27,7 +31,10 @@ class UserDatabase:
     """Mongo database instance"""
 
     chats: AsyncCollection = mongo_client.user.chats
-    """Anonymous user feedback via the built-in survey form."""
+    """Chat conversations"""
+
+    flagged_messages: AsyncCollection = mongo_client.user.flagged_messages
+    """Critical chat messages flagged for manual review"""
 
     @classmethod
     async def get_chats(cls, username: str) -> list[ChatShort]:
@@ -141,6 +148,57 @@ class UserDatabase:
         })
     
     @classmethod
+    async def get_flagged_messages(cls, filter: FlaggedMessageFilter) -> list[FlaggedMessage]:
+        """
+        Get messages flagged for manual review.
+        """
+        result = []
+
+        async for flagged_message in cls.flagged_messages.find(
+            filter = {
+                "_id":       filter._id,
+                "username":  filter.username,
+                "thread_id": filter.thread_id,
+                "status":    filter.status,
+            },
+        ):
+            try:
+                result.append(FlaggedMessage.model_validate(flagged_message))
+            except ValidationError:
+                pass
+
+        return result
+    
+    @classmethod
+    async def insert_flagged_message(cls, msg: UserChatMessage, guard_rail: GuardRailResult):
+        """
+        Insert a new user message flagged for manual review.
+        """
+        await cls.flagged_messages.insert_one({
+            "status":     "needs_review",
+            "message":    msg.model_dump(),
+            "guard_rail": guard_rail.model_dump(),
+            "review":     [],
+        })
+
+    @classmethod
+    async def save_flagged_message(cls, msg: FlaggedMessage):
+        """
+        Save or update a message flagged for manual review.
+        """
+        if not msg._id:
+            await cls.flagged_messages.insert_one(msg.model_dump())
+        else:
+            await cls.flagged_messages.update_one({"_id": msg._id}, msg.model_dump())
+    
+    @classmethod
+    async def delete_flagged_message(cls, id: ObjectId):
+        """
+        Delete a flagged message, if it exists.
+        """
+        await cls.flagged_messages.delete_one({"_id": id})
+    
+    @classmethod
     async def apply_memory_update(cls, key: ChatKey, update: MemoryUpdate) -> ObjectId | None:
         """
         Update the conversational memory in the database. The chat must already exist.
@@ -166,7 +224,7 @@ class UserDatabase:
                     },
                     "memory.messages": {
                         "$each":  update.new_messages,
-                        "$slice": -update.short_term_n,
+                        "$slice": -update.keep_count,
                     }
                 },
             })

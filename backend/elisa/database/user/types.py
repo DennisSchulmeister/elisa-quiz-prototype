@@ -10,13 +10,16 @@ import datetime
 
 from bson              import ObjectId
 from pydantic          import BaseModel
+from typing            import Literal
 
 from ...ai.agent.types import ActivityStates
 from ...ai.agent.types import AgentStates
+from ...ai.guard.types import GuardRailResult
 from ...ai.types       import ChatKey
 from ...ai.types       import ConversationMemory
 from ...ai.types       import MessageHistory
 from ...ai.types       import PersistenceStrategy
+from ...ai.types       import UserChatMessage
 
 class Chat(ChatKey):
     """
@@ -41,3 +44,29 @@ class ChatShort(BaseModel):
     timestamp: datetime.datetime
     thread_id: str
     title:     str
+
+class ReviewLogEntry(BaseModel):
+    """
+    Log entry to document which action was taken when by whom during review of a
+    flagged user message.
+    """
+    timestamp: datetime.datetime
+    username:  str
+    notes:     str
+
+class FlaggedMessage(ChatKey):
+    """
+    Rejected user message flagged for manual review.
+    """
+    _id:        ObjectId | None = None
+    status:     Literal["needs_review", "false_positive", "reviewed"] = "needs_review"
+    message:    UserChatMessage
+    guard_rail: GuardRailResult
+    review:     list[ReviewLogEntry]
+
+class FlaggedMessageFilter(ChatKey):
+    """
+    Search filter for rejected user messages.
+    """
+    _id:    ObjectId | None = None
+    status: Literal["needs_review", "false_positive", "reviewed"] = "needs_review"

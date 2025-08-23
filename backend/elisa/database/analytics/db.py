@@ -25,13 +25,13 @@ class AnalyticsDatabase:
     """Mongo database instance"""
 
     user_feedbacks: AsyncCollection = mongo_client.analytics.user_feedbacks
-    """Anonymous user feedback via the built-in survey form."""
+    """Anonymous user feedback via the built-in survey form"""
 
     usage_times: AsyncCollection = mongo_client.analytics.usage_times
-    """Anonymous time and duration of usage."""
+    """Anonymous time and duration of usage"""
 
     learning_topics: AsyncCollection = mongo_client.analytics.learning_topics
-    """Anonymous keyword of learned topic."""
+    """Anonymous keyword of learned topic"""
 
     @classmethod
     async def insert_user_feedback(cls, feedback_data: UserFeedbackData, user: User) -> ObjectId:

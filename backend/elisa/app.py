@@ -11,6 +11,7 @@ from fastapi                       import FastAPI
 from fastapi                       import WebSocket
 
 from .ai.assistant                 import AIAssistant
+from .ai.guard.registry            import GuardRailRegistry
 from .ai.router.registry           import AgentRouterRegistry
 from .ai.summary.registry          import SummarizerRegistry
 from .ai.title.registry            import TitleGeneratorRegistry
@@ -28,6 +29,7 @@ async def lifespan(app: FastAPI):
     AIAssistant.read_config()
     
     AgentRouterRegistry.read_config()
+    GuardRailRegistry.read_config()
     SummarizerRegistry.read_config()
     TitleGeneratorRegistry.read_config()
     User.read_config()

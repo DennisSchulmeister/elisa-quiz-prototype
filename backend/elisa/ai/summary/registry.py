@@ -26,7 +26,7 @@ class SummarizerRegistry:
         keep_count = os.environ.get("ELISA_SUMMARIZER_KEEP", "10")
 
         if strategy == "default":
-            from .default.summary import DefaultSummarizer
+            from .impl.default import DefaultSummarizer
             cls.Summarizer = DefaultSummarizer
         else:
             raise KeyError(f"ELISA_SUMMARIZER - Invalid value: {strategy}")
@@ -35,3 +35,5 @@ class SummarizerRegistry:
             cls.Summarizer.keep_count = int(keep_count)
         except ValueError:
             raise ValueError(f"ELISA_SUMMARIZER_KEEP - Must be integer: {keep_count}")
+    
+        cls.Summarizer.read_config()

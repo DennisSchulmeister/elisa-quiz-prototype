@@ -6,15 +6,15 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from ....auth.user      import User
-from ...shared.messages import default_role_description
-from ...shared.messages import default_summary_message
-from ...types           import AssistantChatMessage
-from ...types           import UserChatMessage
-from ...types           import SpeakMessageContent
-from ..base             import AgentBase
-from ..types            import ProcessChatMessageResult
-from .types             import DefaultState
+from ....auth.user import User
+from ...shared     import default_role_description
+from ...shared     import default_summary_message
+from ...types      import AssistantChatMessage
+from ...types      import UserChatMessage
+from ...types      import SpeakMessageContent
+from ..base        import AgentBase
+from ..types       import ProcessChatMessageResult
+from .types        import DefaultState
 
 class DefaultAgent(AgentBase[DefaultState]):
     """

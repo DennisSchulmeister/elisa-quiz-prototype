@@ -6,12 +6,14 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
+from abc          import ABC
 from typing       import Callable
 from typing       import Generic
 from typing       import Type
 from typing       import TypeVar
 
 from ...auth.user import User
+from ...shared    import ReadConfigMixin
 from ..assistant  import AIAssistant
 from ..types      import AgentCode
 from ..types      import UserChatMessage
@@ -22,7 +24,7 @@ from .types       import ProcessChatMessageResult
 State = TypeVar("State")
 Agent = TypeVar("Agent")
 
-class AgentBase(Generic[State]):
+class AgentBase(ABC, Generic[State], ReadConfigMixin):
     """
     Base class for the AI agents that implement the the domain logic exhibited
     by the AI assistant.

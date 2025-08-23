@@ -6,15 +6,17 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from abc    import ABC
-from abc    import abstractmethod
-from typing import TYPE_CHECKING
+from abc       import ABC
+from abc       import abstractmethod
+from typing    import TYPE_CHECKING
+
+from ...shared import ReadConfigMixin
 
 if TYPE_CHECKING:
     from ..assistant import AIAssistant
     from .types      import ChatTitle
 
-class TitleGeneratorBase(ABC):
+class TitleGeneratorBase(ABC, ReadConfigMixin):
     """
     Base class for title generator implementations. The title generator (there can only
     be one per conversation) monitors new chat conversations and suggests a title once

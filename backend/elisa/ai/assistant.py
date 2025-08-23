@@ -8,34 +8,33 @@
 
 import instructor, json, os, uuid
 
-from typing              import AsyncGenerator
-from typing              import cast
-from typing              import TYPE_CHECKING
+from typing             import AsyncGenerator
+from typing             import cast
+from typing             import TYPE_CHECKING
 
-from ..auth.user         import User
-from ..database.user.db  import UserDatabase
-from .agent.registry     import AgentRegistry
-from .agent.types        import ActivityId
-from .agent.types        import ActivityState
-from .agent.types        import ActivityUpdate
-from .agent.types        import AgentCode
-from .agent.types        import AgentUpdate
-from .callback           import ChatAgentCallback
-from .router.registry    import AgentRouterRegistry
-from .shared.messages    import default_role_description
-from .shared.messages    import default_summary_message
-from .summary.registry   import SummarizerRegistry
-from .title.registry     import TitleGeneratorRegistry
-from .types              import AssistantChatMessage
-from .types              import ChatKey
-from .types              import ChatMessage
-from .types              import ConversationMemory
-from .types              import GuardRailResult
-from .types              import MemoryUpdate
-from .types              import PersistedState
-from .types              import PersistenceStrategy
-from .types              import SpeakMessageContent
-from .types              import UserChatMessage
+from ..auth.user        import User
+from ..database.user.db import UserDatabase
+from .agent.registry    import AgentRegistry
+from .agent.types       import ActivityId
+from .agent.types       import ActivityState
+from .agent.types       import ActivityUpdate
+from .agent.types       import AgentCode
+from .agent.types       import AgentUpdate
+from .callback          import ChatAgentCallback
+from .guard.registry    import GuardRailRegistry
+from .router.registry   import AgentRouterRegistry
+from .summary.registry  import SummarizerRegistry
+from .title.registry    import TitleGeneratorRegistry
+from .types             import AssistantChatMessage
+from .types             import ChatKey
+from .types             import ChatMessage
+from .types             import ConversationMemory
+from .types             import MemoryUpdate
+from .types             import PersistedState
+from .types             import PersistenceStrategy
+from .types             import SpeakMessageContent
+from .types             import SystemMessageContent
+from .types             import UserChatMessage
 
 if TYPE_CHECKING:
     from .agent.base          import AgentBase
@@ -47,10 +46,6 @@ class AIAssistant:
     messages, applies global guard rails, maintains the conversation memory and
     mediates between internal AI agents that process the user messages.
     """
-
-    # TODO: Configuration options
-    MAX_MESSAGE_SIZE = 25000
-    """Maximum allowed characters for user chat messages"""
 
     max_routing_tries = -1
     """Maximum attempts to route a user chat message to an agent implementation"""
@@ -129,6 +124,7 @@ class AIAssistant:
         self._agent_router    = AgentRouterRegistry.AgentRouter(assistant=self)
         self._summarizer      = SummarizerRegistry.Summarizer(assistant=self)
         self._title_generator = TitleGeneratorRegistry.TitleGenerator(assistant=self)
+        self._guard_rails     = [GuardRail(assistant=self) for GuardRail in GuardRailRegistry.GuardRails]
 
     @classmethod
     async def create(
@@ -213,86 +209,33 @@ class AIAssistant:
         """
         Process chat message sent by the user:
 
-        1. Enforce maximum message size
-        2. Apply guardrail to reject inappropriate content
-        3. Add message to the chat history and conversation memory
-        4. Route message to the most appropriate agent implementation
-        5. Reroute message up to N times, when requested by the agent
+        1. Apply guardrails to reject inappropriate content
+        2. Add message to the chat history and conversation memory
+        3. Route message to the most appropriate agent implementation
+        4. Reroute message up to N times, when requested by the agent
         """
-        # Reject too large message
-        # TODO: List of strategy objects to validate incoming messages (size, content, guard_rails, ...)
-        if len(msg.content.speak) > self.MAX_MESSAGE_SIZE:
-            return await self.stream_assistant_chat_message(
-                propagate         = False,
-                assistant_message = AssistantChatMessage(),
-                partials          = self.client.chat.completions.create_partial(
-                    messages = [
-                        {
-                            "role": "system", 
-                            "content": default_role_description,
-                        }, {
-                            "role": "system",
-                            "content": default_summary_message,
-                        }, {
-                            "role": "user", 
-                            "content": """
-                                Task: Please explain in a short and friendly way that my last message exceeds the
-                                maximum allowed size. Include, that you are designed for interactive usage – relying
-                                on verbal conversation and interactive activities to aid my learning rather then just
-                                summarizing copy&pasted lecture notes or exercise sheets.
+        # Apply guard rails
+        for guard_rail in self._guard_rails:
+            check_result = await guard_rail.check_message(msg)
 
-                                Call to Action: Please suggest some alternative actions based on the previous conversation.
+            if check_result.result != "accept":
+                severity = "info"
 
-                                Language: Please respond in <language_code>{{ language }}</language_code>.
-                            """,
-                        }
-                    ],
-                    context = {
-                        "memory":   self.state.memory,
-                        "language": self.language,
-                    },
-                    response_model = SpeakMessageContent,
-                ),
-            )
+                if check_result.result == "reject-warning":
+                    severity = "warning"
+                elif check_result.result == "reject-critical":
+                    severity = "critical"
+                    await UserDatabase.insert_flagged_message(msg, check_result)
 
-        # Reject inappropriate message
-        # TODO: Strategy object
-        guard_rail = await self.client.chat.completions.create(
-            messages = [
-                {
-                    "role": "system",
-                    "content": """
-                        You are a vigilant content safety reviewer.
-
-                        Role: Silent observer responsible for screening each incoming message.  
-
-                        Goal: Detect and flag any content that is potentially harsh, insulting,
-                        harmful, harassing, illegal, sexual or otherwise inappropriate.
-
-                        Task: Review the user message. If you decide to reject the message, give
-                        a short explanation of your reasoning.
-
-                        Language: Please respond in <language_code>{{ language }}</language_code>.
-                    """,
-                }, {
-                    "role": "user",
-                    "content": msg.content.speak,
-                }
-            ],
-            context = {
-                "message":  msg.content.speak,
-                "language": self.language,
-            },
-            response_model = GuardRailResult,
-        )
-
-        if guard_rail.reject:
-            return await self.send_assistant_chat_message(
-                propagate         = False,
-                assistant_message = AssistantChatMessage(
-                    content = SpeakMessageContent(speak=guard_rail.explanation),
+                return await self.send_assistant_chat_message(
+                    propagate         = False,
+                    assistant_message = AssistantChatMessage(
+                        content = SystemMessageContent(
+                            severity = severity,
+                            text     = check_result.text
+                        ),
+                    )
                 )
-            )
 
         # Route message to agent
         next_agent_code  = ""
@@ -438,6 +381,7 @@ class AIAssistant:
         # Propagate memory update
         update = MemoryUpdate(
             new_messages = _messages,
+            keep_count   = self._summarizer.keep_count,
             previous     = self.state.memory.previous,
             chat_title   = self.state.title,
         )

@@ -24,9 +24,9 @@ from .types              import WebsocketMessage
 class ParentWebsocketHandler:
     """
     A very minimal websocket handler that allows multiple clients to use the chat
-    agent concurrently. Conversation and quizzes are currently not shared. There
+    agent concurrently. Conversation and activities are currently not shared. There
     is no multi-player mode, yet. But chat messages are streamed in real-time to
-    the client, which in turn renders the quiz game accordingly.
+    the client, which in turn renders them accordingly.
     """
     handler_classes = []
 

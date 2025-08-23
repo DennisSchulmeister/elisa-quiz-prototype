@@ -9,7 +9,6 @@
 from pydantic     import BaseModel
 from pydantic     import Field
 from typing       import Literal
-from typing       import List
 from uuid         import uuid4
 
 from .agent.types import ActivityCode
@@ -22,12 +21,13 @@ class SystemMessageContent(BaseModel):
     """
     System message with an error or warning.
     """
-    type: Literal["system"] | str = "system"
-    text: str = ""
+    type:     Literal["system"] | str = "system"
+    severity: Literal["info", "warning", "error", "critical"]
+    text:     str = ""
     
     def ready_to_stream(self):
         """
-        Only start streaming if the type is complete and there is already some text-
+        Only start streaming if the type is complete and there is already some text.
         """
         return self.type == "system" and self.text
 
@@ -40,7 +40,7 @@ class SpeakMessageContent(BaseModel):
 
     def ready_to_stream(self):
         """
-        Only start streaming if the type is complete and there is already some text-
+        Only start streaming if the type is complete and there is already some text.
         """
         return self.type == "speak" and self.speak
 
@@ -53,7 +53,7 @@ class ThinkMessageContent(BaseModel):
 
     def ready_to_stream(self):
         """
-        Only start streaming if the type is complete and there is already some text-
+        Only start streaming if the type is complete and there is already some text.
         """
         return self.type == "think" and self.think
     
@@ -68,8 +68,8 @@ class ProcessMessageContent(BaseModel):
     """
     Progress of a sequential background process.
     """
-    type: Literal["process"] | str = "process"
-    steps: List[ProcessStep] = []
+    type:  Literal["process"] | str = "process"
+    steps: list[ProcessStep] = []
 
     def ready_to_stream(self):
         """
@@ -128,7 +128,7 @@ class ConversationMemory(BaseModel):
     messages in a fading summary. This bounds the context window for the LLM and simulates
     human memory, which cannot remember details for long, either.
     """
-    messages: List[ChatMessage] = []
+    messages: list[ChatMessage] = []
     previous: str = ""
 
 class MemoryUpdate(BaseModel):
@@ -138,14 +138,15 @@ class MemoryUpdate(BaseModel):
     in sync with the server, if the chat is saved on the client.
     """
     chat_title:   str = ""
-    new_messages: List[ChatMessage]
+    new_messages: list[ChatMessage]
+    keep_count:   int
     previous:     str
 
 class MessageHistory(BaseModel):
     """
     Message history that records all chat messages in sequential order.
     """
-    messages: List[ChatMessage] = []
+    messages: list[ChatMessage] = []
 
 class PersistedState(BaseModel):
     """
@@ -165,15 +166,3 @@ class ChatKey(BaseModel):
     """
     username:  str
     thread_id: str
-
-class GuardRailResult(BaseModel):
-    """
-    Guard rail check of a user chat message to decide whether to pass it through.
-    """
-    reject: bool = Field(
-        description = "Whether the message should be rejected"
-    )
-
-    explanation: str = Field(
-        description = "Reasoning behind the classification"
-    )
