@@ -8,11 +8,8 @@
 
 from __future__ import annotations
 from pydantic   import BaseModel, Field
-from typing     import TYPE_CHECKING
+from typing     import Any, Literal
 from uuid       import uuid4
-
-if TYPE_CHECKING:
-    from typing import Any, Literal
 
 AgentCode = str
 """Unique short-code to distinguish agent types"""

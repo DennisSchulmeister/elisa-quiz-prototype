@@ -6,16 +6,12 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from __future__  import annotations
-from datetime    import datetime
-from pydantic    import BaseModel
-from typing      import TYPE_CHECKING
+from __future__        import annotations
+from datetime          import datetime
+from pydantic          import BaseModel
 
-from ...ai.types import ChatKey
-
-if TYPE_CHECKING:
-    from ...ai.agent.types import ActivityStates, AgentStates
-    from ...ai.types       import ConversationMemory, MessageHistory, PersistenceStrategy
+from ...ai.agent.types import ActivityStates, AgentStates
+from ...ai.types       import ChatKey, ConversationMemory, MessageHistory, PersistenceStrategy
 
 class RenameChat(ChatKey):
     """

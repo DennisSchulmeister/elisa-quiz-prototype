@@ -7,14 +7,10 @@
 # License, or (at your option) any later version.
 
 from __future__ import annotations
-
-from pydantic import BaseModel
-from typing   import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from bson     import ObjectId
-    from datetime import datetime
-    from typing   import Literal
+from bson       import ObjectId
+from datetime   import datetime
+from pydantic   import BaseModel
+from typing     import Literal
 
 class UserFeedbackData1(BaseModel):
     """
