@@ -8,18 +8,19 @@
 
 from __future__ import annotations
 
-import traceback
-
 from asyncio.exceptions  import CancelledError
-from fastapi             import WebSocket, WebSocketDisconnect
-from typing              import Any, TYPE_CHECKING
+from fastapi             import WebSocketDisconnect
+from traceback           import print_exc
+from typing              import TYPE_CHECKING
 
 from ..auth.exceptions   import AuthenticationRequired, PermissionDenied
+from ..auth.user         import User
 from ..database.error.db import ErrorDatabase
 from .types              import WebsocketMessage
 
 if TYPE_CHECKING:
-    from ..auth.user import User
+    from fastapi import WebSocket
+    from typing  import Any
 
 class ParentWebsocketHandler:
     """
@@ -93,7 +94,7 @@ class ParentWebsocketHandler:
                 print("Client disconnected", flush=True)
                 break
             except Exception as e:
-                traceback.print_exc()
+                print_exc()
                 print(flush=True)
 
                 await ErrorDatabase.insert_server_exception(e)
@@ -104,7 +105,7 @@ class ParentWebsocketHandler:
                 if hasattr(handler_object, "on_connection_closed"):
                     await handler_object.on_connection_closed()
             except Exception as e:
-                traceback.print_exc()
+                print_exc()
                 print(flush=True)
                 await ErrorDatabase.insert_server_exception(e)
 
@@ -131,6 +132,6 @@ class ParentWebsocketHandler:
                 if hasattr(handler, "notify"):
                     await handler.notify(key, value)
             except Exception as e:
-                traceback.print_exc()
+                print_exc()
                 print(flush=True)
                 await ErrorDatabase.insert_server_exception(e)

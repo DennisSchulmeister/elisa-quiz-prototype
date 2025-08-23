@@ -8,11 +8,13 @@
 
 from __future__ import annotations
 
-import datetime
-
-from bson     import ObjectId
 from pydantic import BaseModel
-from typing   import Literal
+from typing   import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from bson     import ObjectId
+    from datetime import datetime
+    from typing   import Literal
 
 class UserFeedbackData1(BaseModel):
     """
@@ -36,7 +38,7 @@ class UserFeedback(BaseModel):
     understand the users and what features they wish.
     """
     _id:       ObjectId | None = None
-    timestamp: datetime.datetime
+    timestamp: datetime
     username:  str
     data:      UserFeedbackData
 
@@ -46,8 +48,8 @@ class UsageTime(BaseModel):
     often, when and how long the application is typically used.
     """
     _id:              ObjectId | None = None
-    start_usage:      datetime.datetime
-    end_usage:        datetime.datetime | None = None
+    start_usage:      datetime
+    end_usage:        datetime | None = None
     duration_seconds: int = -1
 
 class LearningTopicBase(BaseModel):

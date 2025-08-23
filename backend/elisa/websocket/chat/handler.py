@@ -7,17 +7,21 @@
 # License, or (at your option) any later version.
 
 from __future__         import annotations
-from typing             import override
+from typing             import override, TYPE_CHECKING
 
-from ...ai.agent.types  import ActivityUpdate, AgentUpdate
+from ...ai.agent.types  import ActivityUpdate
 from ...ai.assistant    import AIAssistant
 from ...ai.callback     import ChatAgentCallback
-from ...ai.types        import AssistantChatMessage, MemoryUpdate, UserChatMessage
+from ...ai.types        import UserChatMessage
 from ...auth.exceptions import PermissionDenied
-from ...auth.user       import User
 from ..decorators       import handle_message, websocket_handler
-from ..parent           import ParentWebsocketHandler
 from .types             import ChangeLanguage, StartActivity, StartChat
+
+if TYPE_CHECKING:
+    from ...ai.agent.types  import AgentUpdate
+    from ...ai.types        import AssistantChatMessage, MemoryUpdate
+    from ...auth.user       import User
+    from ..parent           import ParentWebsocketHandler
 
 @websocket_handler
 class ChatHandler(ChatAgentCallback):

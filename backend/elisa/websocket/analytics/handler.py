@@ -6,15 +6,18 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from __future__                  import annotations
-from bson                        import ObjectId
+from __future__ import annotations
+from typing     import TYPE_CHECKING
 
-from ...auth.user                import User
 from ...database.analytics.db    import AnalyticsDatabase
 from ...database.analytics.types import UserFeedbackData
 from ..decorators                import handle_message, websocket_handler
-from ..parent                    import ParentWebsocketHandler
 from .types                      import PrivacySettingsMessage
+
+if TYPE_CHECKING:
+    from bson         import ObjectId
+    from ...auth.user import User
+    from ..parent     import ParentWebsocketHandler
 
 @websocket_handler
 class AnalyticsHandler:

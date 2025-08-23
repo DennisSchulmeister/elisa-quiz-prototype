@@ -7,12 +7,12 @@
 # License, or (at your option) any later version.
 
 from __future__ import annotations
+from abc        import ABC, abstractmethod
+from typing     import TYPE_CHECKING
 
-from abc          import ABC
-from abc          import abstractmethod
-
-from .agent.types import ActivityUpdate, AgentUpdate
-from .types       import AssistantChatMessage, MemoryUpdate
+if TYPE_CHECKING:
+    from .agent.types import ActivityUpdate, AgentUpdate
+    from .types       import AssistantChatMessage, MemoryUpdate
 
 class ChatAgentCallback(ABC):
     """

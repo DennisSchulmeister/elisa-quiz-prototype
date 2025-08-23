@@ -6,17 +6,22 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from __future__                      import annotations
-from bson                            import ObjectId
-from pydantic                        import ValidationError
-from pymongo.asynchronous.collection import AsyncCollection
+from __future__        import annotations
+from bson              import ObjectId
+from pydantic          import ValidationError
+from typing            import TYPE_CHECKING
 
-from ...ai.agent.types               import ActivityUpdate, AgentUpdate
-from ...ai.guard.types               import GuardRailResult
-from ...ai.types                     import MemoryUpdate, UserChatMessage
-from ...database.utils               import now
-from ..utils                         import mongo_client
-from .types                          import Chat, ChatKey, ChatShort, FlaggedMessage, FlaggedMessageFilter
+from ...database.utils import now
+from ..utils           import mongo_client
+from .types            import Chat, ChatShort, FlaggedMessage
+
+if TYPE_CHECKING:
+    from pymongo.asynchronous.collection import AsyncCollection
+
+    from ...ai.agent.types               import ActivityUpdate, AgentUpdate
+    from ...ai.guard.types               import GuardRailResult
+    from ...ai.types                     import MemoryUpdate, UserChatMessage
+    from .types                          import ChatKey, FlaggedMessageFilter
 
 class UserDatabase:
     """

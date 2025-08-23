@@ -8,11 +8,12 @@
 
 from __future__   import annotations
 from abc          import ABC
-from typing       import Callable, Generic, TypeVar, TYPE_CHECKING
+from typing       import Generic, TypeVar, TYPE_CHECKING
 
 from ...shared    import ReadConfigMixin
 
 if TYPE_CHECKING:
+    from typing       import Callable
     from ...auth.user import User
     from ..assistant  import AIAssistant
     from ..types      import AgentCode, UserChatMessage

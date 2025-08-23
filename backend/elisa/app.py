@@ -9,7 +9,8 @@
 from __future__ import annotations
 
 from contextlib                    import asynccontextmanager
-from fastapi                       import FastAPI, WebSocket
+from fastapi                       import FastAPI
+from typing                        import TYPE_CHECKING
 
 from .ai.assistant                 import AIAssistant
 from .ai.guard.registry            import GuardRailRegistry
@@ -23,6 +24,9 @@ from .websocket.chat.handler       import ChatHandler
 from .websocket.connection.handler import ConnectionHandler
 from .websocket.error.handler      import ErrorHandler
 from .websocket.user.handler       import UserHandler
+
+if TYPE_CHECKING:
+    from fastapi import WebSocket
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

@@ -8,13 +8,15 @@
 
 from __future__ import annotations
 
-import traceback
+from traceback  import format_exception
+from typing     import TYPE_CHECKING
+from ..utils    import mongo_client, now
+from .types     import BugReport, ErrorEntry
 
-from bson                            import ObjectId
-from pymongo.asynchronous.collection import AsyncCollection
+if TYPE_CHECKING:
+    from bson                            import ObjectId
+    from pymongo.asynchronous.collection import AsyncCollection
 
-from ..utils                         import mongo_client, now
-from .types                          import BugReport, ErrorEntry
 
 class ErrorDatabase:
     """
@@ -35,7 +37,7 @@ class ErrorDatabase:
         Save the name and stack trace of a python exception.
         """
         error_message = str(exception)
-        stack_trace   = ''.join(traceback.format_exception(type(exception), exception, exception.__traceback__))
+        stack_trace   = ''.join(format_exception(type(exception), exception, exception.__traceback__))
 
         error = ErrorEntry(
             timestamp     = now(),

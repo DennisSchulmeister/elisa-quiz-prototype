@@ -8,11 +8,13 @@
 
 from __future__ import annotations
 
-import datetime
-
-from bson     import ObjectId
 from pydantic import BaseModel
-from typing   import Literal
+from typing   import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from bson     import ObjectId
+    from datetime import datetime
+    from typing   import Literal
 
 class ErrorEntry(BaseModel):
     """
@@ -20,7 +22,7 @@ class ErrorEntry(BaseModel):
     in production.
     """
     _id:           ObjectId | None = None
-    timestamp:     datetime.datetime
+    timestamp:     datetime
     error_type:    Literal["server", "client", "message"]
     error_message: str
     stack_trace:   str = ""
@@ -30,7 +32,7 @@ class BugReport(BaseModel):
     Manual bug report filled-in within the client.
     """
     _id:         ObjectId | None = None
-    timestamp:   datetime.datetime
+    timestamp:   datetime
     username:    str
     description: str
     contact:     str

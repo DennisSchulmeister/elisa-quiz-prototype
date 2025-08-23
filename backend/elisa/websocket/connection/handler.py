@@ -7,9 +7,11 @@
 # License, or (at your option) any later version.
 
 from __future__   import annotations
-
+from typing       import TYPE_CHECKING
 from ..decorators import handle_message, websocket_handler
-from ..parent     import ParentWebsocketHandler
+
+if TYPE_CHECKING:
+    from ..parent import ParentWebsocketHandler
 
 @websocket_handler
 class ConnectionHandler:

@@ -10,13 +10,15 @@ from __future__ import annotations
 
 import datetime
 
-from bson              import ObjectId
-from pydantic          import BaseModel
-from typing            import Literal
+from bson     import ObjectId
+from pydantic import BaseModel
+from typing   import TYPE_CHECKING
 
-from ...ai.agent.types import ActivityStates, AgentStates
-from ...ai.guard.types import GuardRailResult
-from ...ai.types       import ChatKey, ConversationMemory, MessageHistory, PersistenceStrategy, UserChatMessage
+if TYPE_CHECKING:
+    from typing            import Literal
+    from ...ai.agent.types import ActivityStates, AgentStates
+    from ...ai.guard.types import GuardRailResult
+    from ...ai.types       import ChatKey, ConversationMemory, MessageHistory, PersistenceStrategy, UserChatMessage
 
 class Chat(ChatKey):
     """

@@ -7,12 +7,15 @@
 # License, or (at your option) any later version.
 
 from __future__           import annotations
+from typing               import TYPE_CHECKING
 
-from ...auth.user         import User
 from ...database.error.db import ErrorDatabase
 from ..decorators         import handle_message, websocket_handler
-from ..parent             import ParentWebsocketHandler
 from .types               import BugReportMessage, ClientErrorMessage
+
+if TYPE_CHECKING:
+    from ...auth.user import User
+    from ..parent     import ParentWebsocketHandler
 
 @websocket_handler
 class ErrorHandler:

@@ -12,22 +12,22 @@ import instructor, json, os, uuid
 
 from typing             import AsyncGenerator, cast, TYPE_CHECKING
 
-from ..auth.user        import User
 from ..database.user.db import UserDatabase
 from .agent.registry    import AgentRegistry
-from .agent.types       import ActivityId, ActivityState, ActivityUpdate, AgentCode, AgentUpdate
 from .callback          import ChatAgentCallback
 from .guard.registry    import GuardRailRegistry
 from .router.registry   import AgentRouterRegistry
 from .summary.registry  import SummarizerRegistry
 from .title.registry    import TitleGeneratorRegistry
-from .types             import AssistantChatMessage, ChatKey, ChatMessage, ConversationMemory, MemoryUpdate
-from .types             import PersistedState, PersistenceStrategy, SpeakMessageContent, SystemMessageContent
-from .types             import UserChatMessage
 
 if TYPE_CHECKING:
+    from ..auth.user          import User
     from .agent.base          import AgentBase
     from .agent.default.agent import DefaultAgent
+    from .agent.types         import ActivityId, ActivityState, ActivityUpdate, AgentCode, AgentUpdate
+    from .types               import AssistantChatMessage, ChatKey, ChatMessage, ConversationMemory, MemoryUpdate
+    from .types               import PersistedState, PersistenceStrategy, SpeakMessageContent, SystemMessageContent
+    from .types               import UserChatMessage
 
 class AIAssistant:
     """

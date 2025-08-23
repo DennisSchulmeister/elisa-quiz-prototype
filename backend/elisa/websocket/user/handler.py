@@ -7,15 +7,18 @@
 # License, or (at your option) any later version.
 
 from __future__             import annotations
+from typing                 import TYPE_CHECKING
 
 from ...ai.types            import ChatKey
 from ...auth.exceptions     import PermissionDenied
-from ...auth.user           import User
 from ...database.user.db    import UserDatabase
 from ...database.user.types import Chat
 from ..decorators           import handle_message, websocket_handler
-from ..parent               import ParentWebsocketHandler
 from .types                 import RenameChat, SaveChat
+
+if TYPE_CHECKING:
+    from ...auth.user import User
+    from ..parent     import ParentWebsocketHandler
 
 @websocket_handler
 class UserHandler:

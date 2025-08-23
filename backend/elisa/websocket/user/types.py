@@ -6,13 +6,16 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from __future__ import annotations
+from __future__  import annotations
+from datetime    import datetime
+from pydantic    import BaseModel
+from typing      import TYPE_CHECKING
 
-import datetime
+from ...ai.types import ChatKey
 
-from pydantic          import BaseModel
-from ...ai.agent.types import ActivityStates, AgentStates
-from ...ai.types       import ChatKey, ConversationMemory, MessageHistory, PersistenceStrategy
+if TYPE_CHECKING:
+    from ...ai.agent.types import ActivityStates, AgentStates
+    from ...ai.types       import ConversationMemory, MessageHistory, PersistenceStrategy
 
 class RenameChat(ChatKey):
     """
@@ -25,7 +28,7 @@ class SaveChat(BaseModel):
     Message body to move a full chat conversation from client to server,
     so that it is centrally saved on the server.
     """
-    timestamp:   datetime.datetime
+    timestamp:   datetime
     title:       str
     persistence: PersistenceStrategy
     encrypt:     bool

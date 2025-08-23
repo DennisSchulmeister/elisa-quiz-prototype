@@ -6,13 +6,18 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from __future__                      import annotations
-from bson                            import ObjectId
-from pymongo.asynchronous.collection import AsyncCollection
+from __future__ import annotations
+from typing     import TYPE_CHECKING
 
-from ...auth.user                    import User
-from ..utils                         import mongo_client, now
-from .types                          import LearningTopicBase, UsageTime, UserFeedback, UserFeedbackData
+from ..utils    import mongo_client, now
+from .types     import UsageTime, UserFeedback
+
+if TYPE_CHECKING:
+    from bson                            import ObjectId
+    from pymongo.asynchronous.collection import AsyncCollection
+
+    from ...auth.user                    import User
+    from .types                          import LearningTopicBase, UserFeedbackData
 
 class AnalyticsDatabase:
     """

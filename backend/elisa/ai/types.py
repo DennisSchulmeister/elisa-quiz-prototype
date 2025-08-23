@@ -8,10 +8,12 @@
 
 from __future__   import annotations
 from pydantic     import BaseModel, Field
-from typing       import Literal
+from typing       import TYPE_CHECKING
 from uuid         import uuid4
 
-from .agent.types import ActivityCode, ActivityId, ActivityStates, AgentCode, AgentStates
+if TYPE_CHECKING:
+    from typing import Literal
+    from .agent.types import ActivityCode, ActivityId, ActivityStates, AgentCode, AgentStates
 
 class SystemMessageContent(BaseModel):
     """

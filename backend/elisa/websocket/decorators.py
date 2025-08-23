@@ -7,8 +7,11 @@
 # License, or (at your option) any later version.
 
 from __future__ import annotations
-from typing     import Any, Callable, Optional
+from typing     import TYPE_CHECKING
 from pydantic   import BaseModel
+
+if TYPE_CHECKING:
+    from typing import Any, Callable, Optional
 
 def websocket_handler(cls: type) -> type:
     """
