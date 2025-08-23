@@ -10,9 +10,7 @@ from __future__ import annotations
 
 import os, requests
 
-from jwt            import decode as jwt_decode
-from jwt            import get_unverified_header
-from jwt            import PyJWK
+from jwt            import decode as jwt_decode, get_unverified_header, PyJWK
 from jwt.exceptions import InvalidTokenError
 
 class User:

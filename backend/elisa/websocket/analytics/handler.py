@@ -12,8 +12,7 @@ from bson                        import ObjectId
 from ...auth.user                import User
 from ...database.analytics.db    import AnalyticsDatabase
 from ...database.analytics.types import UserFeedbackData
-from ..decorators                import handle_message
-from ..decorators                import websocket_handler
+from ..decorators                import handle_message, websocket_handler
 from ..parent                    import ParentWebsocketHandler
 from .types                      import PrivacySettingsMessage
 

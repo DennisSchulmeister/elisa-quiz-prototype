@@ -10,12 +10,9 @@ from __future__ import annotations
 
 import os
 
-from typing   import override
-from typing   import TYPE_CHECKING
-
+from typing   import override, TYPE_CHECKING
 from ..base   import GuardRailBase
-from ..types  import Explanation
-from ..types  import GuardRailResult
+from ..types  import Explanation, GuardRailResult
 
 if TYPE_CHECKING:
     from ...types import UserChatMessage
@@ -43,7 +40,7 @@ class MessageSizeGuardRail(GuardRailBase):
             raise ValueError(f"ELISA_MAX_MSG_SIZE - Must be integer: {max_message_size}")
         
     @override
-    async def check_message(self, msg: "UserChatMessage") -> GuardRailResult:
+    async def check_message(self, msg: UserChatMessage) -> GuardRailResult:
         """
         Inspect the given user message and decide whether it goes through or is rejected.
         """

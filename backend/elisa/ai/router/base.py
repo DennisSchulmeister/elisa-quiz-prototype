@@ -7,8 +7,7 @@
 # License, or (at your option) any later version.
 
 from __future__ import annotations
-from abc        import ABC
-from abc        import abstractmethod
+from abc        import ABC, abstractmethod
 from typing     import TYPE_CHECKING
 
 from ...shared  import ReadConfigMixin
@@ -25,7 +24,7 @@ class AgentRouterBase(ABC, ReadConfigMixin):
     based on the message itself and typically the last used agent and current activity.
     """
 
-    def __init__(self, assistant: "AIAssistant"):
+    def __init__(self, assistant: AIAssistant):
         """
         Constructor. Saves a reference to the top-level AI assistant, from which
         also the default LLM chat completion client can be accessed.
@@ -33,7 +32,7 @@ class AgentRouterBase(ABC, ReadConfigMixin):
         self._assistant = assistant
     
     @abstractmethod
-    async def choose_agent(self, msg: "UserChatMessage") -> "ChooseAgentResult":
+    async def choose_agent(self, msg: UserChatMessage) -> ChooseAgentResult:
         """
         Inspect the given user message and decide which agent should handle it.
         """

@@ -10,32 +10,19 @@ from __future__ import annotations
 
 import instructor, json, os, uuid
 
-from typing             import AsyncGenerator
-from typing             import cast
-from typing             import TYPE_CHECKING
+from typing             import AsyncGenerator, cast, TYPE_CHECKING
 
 from ..auth.user        import User
 from ..database.user.db import UserDatabase
 from .agent.registry    import AgentRegistry
-from .agent.types       import ActivityId
-from .agent.types       import ActivityState
-from .agent.types       import ActivityUpdate
-from .agent.types       import AgentCode
-from .agent.types       import AgentUpdate
+from .agent.types       import ActivityId, ActivityState, ActivityUpdate, AgentCode, AgentUpdate
 from .callback          import ChatAgentCallback
 from .guard.registry    import GuardRailRegistry
 from .router.registry   import AgentRouterRegistry
 from .summary.registry  import SummarizerRegistry
 from .title.registry    import TitleGeneratorRegistry
-from .types             import AssistantChatMessage
-from .types             import ChatKey
-from .types             import ChatMessage
-from .types             import ConversationMemory
-from .types             import MemoryUpdate
-from .types             import PersistedState
-from .types             import PersistenceStrategy
-from .types             import SpeakMessageContent
-from .types             import SystemMessageContent
+from .types             import AssistantChatMessage, ChatKey, ChatMessage, ConversationMemory, MemoryUpdate
+from .types             import PersistedState, PersistenceStrategy, SpeakMessageContent, SystemMessageContent
 from .types             import UserChatMessage
 
 if TYPE_CHECKING:
@@ -90,8 +77,8 @@ class AIAssistant:
         callback:    ChatAgentCallback,
         user:        User,
         thread_id:   str,
-        persistence: "PersistenceStrategy",
-        state:       "PersistedState",
+        persistence: PersistenceStrategy,
+        state:       PersistedState,
     ):
         """
         Constructor. Not to be called directly, but used by the `create` factory-method.
@@ -109,7 +96,7 @@ class AIAssistant:
         self.user                  = user
         self.state                 = state
 
-        self.agents: "dict[AgentCode, AgentBase]" = {agent.code: agent(assistant=self) for agent in AgentRegistry.get_all_agent_classes()}
+        self.agents: dict[AgentCode, AgentBase] = {agent.code: agent(assistant=self) for agent in AgentRegistry.get_all_agent_classes()}
 
         for code, agent in self.agents.items():
             # Note that self._state.agents is only ever used here 
@@ -120,6 +107,7 @@ class AIAssistant:
         self.current_activity: ActivityState | None = None
 
         # Internal properties
+        self._chat_key        = ChatKey(username = user.subject, thread_id = thread_id)
         self._callback        = callback
         self._thread_id       = thread_id
         self._persistence     = persistence
@@ -133,9 +121,9 @@ class AIAssistant:
         cls,
         callback:    ChatAgentCallback,
         user:        User,
-        thread_id:   str                     = "",
-        persistence: "PersistenceStrategy"   = "none",
-        state:       "PersistedState | None" = None
+        thread_id:   str                   = "",
+        persistence: PersistenceStrategy   = "none",
+        state:       PersistedState | None = None
     ):
         """
         Start new chat or resume previous chat. The previous chat can either be stored
@@ -177,8 +165,7 @@ class AIAssistant:
             persistence = persistence,
             state       = state,
         )
-
-        default_agent: "DefaultAgent" = cast("DefaultAgent", instance.agents["default"])
+        default_agent: DefaultAgent = cast(DefaultAgent, instance.agents["default"])
         await default_agent.greet_user()
         return instance
     
@@ -227,7 +214,7 @@ class AIAssistant:
                     severity = "warning"
                 elif check_result.result == "reject-critical":
                     severity = "critical"
-                    await UserDatabase.insert_flagged_message(msg, check_result)
+                    await UserDatabase.insert_flagged_message(self._chat_key, msg, check_result)
 
                 return await self.send_assistant_chat_message(
                     propagate         = False,

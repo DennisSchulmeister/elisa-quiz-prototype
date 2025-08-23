@@ -7,9 +7,7 @@
 # License, or (at your option) any later version.
 
 from __future__ import annotations
-from typing     import override
-from typing     import TYPE_CHECKING
-
+from typing     import override, TYPE_CHECKING
 from ..base     import GuardRailBase
 from ..types    import GuardRailResult
 
@@ -26,7 +24,7 @@ class ContentSafetyLLMGuardRail(GuardRailBase):
     """Maximum allowed characters for user chat messages"""
 
     @override
-    async def check_message(self, msg: "UserChatMessage") -> GuardRailResult:
+    async def check_message(self, msg: UserChatMessage) -> GuardRailResult:
         """
         Inspect the given user message and decide whether it goes through or is rejected.
         """

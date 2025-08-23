@@ -9,21 +9,15 @@
 from __future__         import annotations
 from typing             import override
 
-from ...ai.agent.types  import ActivityUpdate
-from ...ai.agent.types  import AgentUpdate
+from ...ai.agent.types  import ActivityUpdate, AgentUpdate
 from ...ai.assistant    import AIAssistant
 from ...ai.callback     import ChatAgentCallback
-from ...ai.types        import AssistantChatMessage
-from ...ai.types        import MemoryUpdate
-from ...ai.types        import UserChatMessage
+from ...ai.types        import AssistantChatMessage, MemoryUpdate, UserChatMessage
 from ...auth.exceptions import PermissionDenied
 from ...auth.user       import User
-from ..decorators       import handle_message
-from ..decorators       import websocket_handler
+from ..decorators       import handle_message, websocket_handler
 from ..parent           import ParentWebsocketHandler
-from .types             import ChangeLanguage
-from .types             import StartActivity
-from .types             import StartChat
+from .types             import ChangeLanguage, StartActivity, StartChat
 
 @websocket_handler
 class ChatHandler(ChatAgentCallback):

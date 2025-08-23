@@ -13,10 +13,8 @@ import traceback
 from bson                            import ObjectId
 from pymongo.asynchronous.collection import AsyncCollection
 
-from ..utils                         import mongo_client
-from ..utils                         import now
-from .types                          import BugReport
-from .types                          import ErrorEntry
+from ..utils                         import mongo_client, now
+from .types                          import BugReport, ErrorEntry
 
 class ErrorDatabase:
     """

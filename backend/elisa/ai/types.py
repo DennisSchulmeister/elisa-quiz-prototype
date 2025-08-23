@@ -7,16 +7,11 @@
 # License, or (at your option) any later version.
 
 from __future__   import annotations
-from pydantic     import BaseModel
-from pydantic     import Field
+from pydantic     import BaseModel, Field
 from typing       import Literal
 from uuid         import uuid4
 
-from .agent.types import ActivityCode
-from .agent.types import ActivityId
-from .agent.types import ActivityStates
-from .agent.types import AgentCode
-from .agent.types import AgentStates
+from .agent.types import ActivityCode, ActivityId, ActivityStates, AgentCode, AgentStates
 
 class SystemMessageContent(BaseModel):
     """

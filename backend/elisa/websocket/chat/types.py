@@ -10,8 +10,7 @@ from __future__        import annotations
 from pydantic          import BaseModel
 
 from ...ai.agent.types import ActivityId
-from ...ai.types       import PersistedState
-from ...ai.types       import PersistenceStrategy
+from ...ai.types       import PersistedState, PersistenceStrategy
 
 class StartChat(BaseModel):
     """

@@ -7,8 +7,7 @@
 # License, or (at your option) any later version.
 
 from __future__ import annotations
-from abc        import ABC
-from abc        import abstractmethod
+from abc        import ABC, abstractmethod
 from typing     import TYPE_CHECKING
 
 from ...shared  import ReadConfigMixin
@@ -24,7 +23,7 @@ class TitleGeneratorBase(ABC, ReadConfigMixin):
     enough messages have been seen.
     """
 
-    def __init__(self, assistant: "AIAssistant"):
+    def __init__(self, assistant: AIAssistant):
         """
         Constructor. Saves a reference to the top-level AI assistant, from which
         also the default LLM chat completion client can be accessed.
@@ -32,7 +31,7 @@ class TitleGeneratorBase(ABC, ReadConfigMixin):
         self._assistant = assistant
 
     @abstractmethod
-    async def suggest_title(self) -> "ChatTitle":
+    async def suggest_title(self) -> ChatTitle:
         """
         Inspect the conversation memory saved in the AI assistant's state and try to
         suggest a meaningful title under which to save the conversation. Will be called

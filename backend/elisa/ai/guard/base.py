@@ -7,8 +7,7 @@
 # License, or (at your option) any later version.
 
 from __future__ import annotations
-from abc        import ABC
-from abc        import abstractmethod
+from abc        import ABC, abstractmethod
 from typing     import TYPE_CHECKING
 
 from ...shared  import ReadConfigMixin
@@ -25,7 +24,7 @@ class GuardRailBase(ABC, ReadConfigMixin):
     due to size limitations or unsafe content a short explanation is returned.
     """
 
-    def __init__(self, assistant: "AIAssistant"):
+    def __init__(self, assistant: AIAssistant):
         """
         Constructor. Saves a reference to the top-level AI assistant, from which
         also the default LLM chat completion client can be accessed.
@@ -33,7 +32,7 @@ class GuardRailBase(ABC, ReadConfigMixin):
         self._assistant = assistant
     
     @abstractmethod
-    async def check_message(self, msg: "UserChatMessage") -> "GuardRailResult":
+    async def check_message(self, msg: UserChatMessage) -> GuardRailResult:
         """
         Inspect the given user message and decide whether it goes through or is rejected.
         """

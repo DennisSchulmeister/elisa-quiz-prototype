@@ -7,10 +7,12 @@
 # License, or (at your option) any later version.
 
 from __future__ import annotations
+from typing     import TYPE_CHECKING
 
 from ..base     import AgentBase
-from .types     import ExamInterviewActivity
-from .types     import ExamInterviewState
+
+if TYPE_CHECKING:
+    from .types import ExamInterviewState
 
 class ExamInterviewAgent(AgentBase[ExamInterviewState]):
     """

@@ -11,17 +11,15 @@ from __future__ import annotations
 import traceback
 
 from asyncio.exceptions  import CancelledError
-from fastapi             import WebSocket
-from fastapi             import WebSocketDisconnect
-from typing              import Any
-from typing              import Mapping
-from typing              import Type
+from fastapi             import WebSocket, WebSocketDisconnect
+from typing              import Any, TYPE_CHECKING
 
-from ..auth.exceptions   import AuthenticationRequired
-from ..auth.exceptions   import PermissionDenied
-from ..auth.user         import User
+from ..auth.exceptions   import AuthenticationRequired, PermissionDenied
 from ..database.error.db import ErrorDatabase
 from .types              import WebsocketMessage
+
+if TYPE_CHECKING:
+    from ..auth.user import User
 
 class ParentWebsocketHandler:
     """
@@ -33,7 +31,7 @@ class ParentWebsocketHandler:
     handler_classes = []
 
     @classmethod
-    def add_handler(cls, handler: Type[Any]):
+    def add_handler(cls, handler: type):
         """
         To be called at server startup to register all message handler classes.
         The classes must have been annotated with `@websocket_handler` and use
@@ -110,7 +108,7 @@ class ParentWebsocketHandler:
                 print(flush=True)
                 await ErrorDatabase.insert_server_exception(e)
 
-    async def send_message(self, code: str, data: Mapping[str, Any] = {}):
+    async def send_message(self, code: str, data: dict[str, Any] = {}):
         """
         Send a message to the client.
         """

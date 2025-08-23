@@ -8,19 +8,15 @@
 
 from __future__   import annotations
 from abc          import ABC
-from typing       import Callable
-from typing       import Generic
-from typing       import Type
-from typing       import TypeVar
+from typing       import Callable, Generic, TypeVar, TYPE_CHECKING
 
-from ...auth.user import User
 from ...shared    import ReadConfigMixin
-from ..assistant  import AIAssistant
-from ..types      import AgentCode
-from ..types      import UserChatMessage
-from .types       import ActivityUpdate
-from .types       import AgentUpdate
-from .types       import ProcessChatMessageResult
+
+if TYPE_CHECKING:
+    from ...auth.user import User
+    from ..assistant  import AIAssistant
+    from ..types      import AgentCode, UserChatMessage
+    from .types       import ActivityUpdate, AgentUpdate, ProcessChatMessageResult
 
 State = TypeVar("State")
 Agent = TypeVar("Agent")
@@ -35,10 +31,10 @@ class AgentBase(ABC, Generic[State], ReadConfigMixin):
     # Class attributes for agent configuration
     #=========================================
 
-    code: "AgentCode"
+    code: AgentCode
     """Unique short-code to distinguish agent types"""
 
-    personas: "dict[str, Callable[..., Type[PersonaBase]]]" = {}
+    personas: dict[str, Callable[..., type[PersonaBase]]] = {}
     """Personas used by this agent"""
 
     activities: dict[str, str] = {}

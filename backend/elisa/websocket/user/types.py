@@ -11,13 +11,8 @@ from __future__ import annotations
 import datetime
 
 from pydantic          import BaseModel
-
-from ...ai.agent.types import ActivityStates
-from ...ai.agent.types import AgentStates
-from ...ai.types       import ChatKey
-from ...ai.types       import ConversationMemory
-from ...ai.types       import MessageHistory
-from ...ai.types       import PersistenceStrategy
+from ...ai.agent.types import ActivityStates, AgentStates
+from ...ai.types       import ChatKey, ConversationMemory, MessageHistory, PersistenceStrategy
 
 class RenameChat(ChatKey):
     """

@@ -11,12 +11,8 @@ from bson                            import ObjectId
 from pymongo.asynchronous.collection import AsyncCollection
 
 from ...auth.user                    import User
-from ..utils                         import mongo_client
-from ..utils                         import now
-from .types                          import LearningTopicBase
-from .types                          import UsageTime
-from .types                          import UserFeedback
-from .types                          import UserFeedbackData
+from ..utils                         import mongo_client, now
+from .types                          import LearningTopicBase, UsageTime, UserFeedback, UserFeedbackData
 
 class AnalyticsDatabase:
     """

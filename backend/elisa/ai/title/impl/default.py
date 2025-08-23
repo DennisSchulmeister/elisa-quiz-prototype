@@ -7,8 +7,7 @@
 # License, or (at your option) any later version.
 
 from __future__ import annotations
-from typing     import override
-from typing     import TYPE_CHECKING
+from typing     import override, TYPE_CHECKING
 
 from ...shared  import default_summary_message
 from ..base     import TitleGeneratorBase
@@ -24,7 +23,7 @@ class DefaultTitleGenerator(TitleGeneratorBase):
     """
 
     @override
-    async def suggest_title(self) -> "ChatTitle":
+    async def suggest_title(self) -> ChatTitle:
         """
         Suggest conversation title.
         """

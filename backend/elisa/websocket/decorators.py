@@ -7,10 +7,10 @@
 # License, or (at your option) any later version.
 
 from __future__ import annotations
-from typing     import Any, Callable, Optional, Type
+from typing     import Any, Callable, Optional
 from pydantic   import BaseModel
 
-def websocket_handler(cls: Type[Any]) -> Type[Any]:
+def websocket_handler(cls: type) -> type:
     """
     Mark a class as a websocket handler class, so that its methods can be annotated
     with `@handle_message`. This populates the class's `_message_handlers` dictionary
@@ -34,7 +34,7 @@ def websocket_handler(cls: Type[Any]) -> Type[Any]:
 
 def handle_message(
     message_code:  str,
-    message_type:  Optional[Type[BaseModel]] = None,
+    message_type:  Optional[type[BaseModel]] = None,
     require_auth:  Optional[bool] = False,
     require_scope: Optional[str] = "",
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:

@@ -6,17 +6,17 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from __future__    import annotations
+from __future__ import annotations
+from typing     import TYPE_CHECKING
 
-from ....auth.user import User
-from ...shared     import default_role_description
-from ...shared     import default_summary_message
-from ...types      import AssistantChatMessage
-from ...types      import UserChatMessage
-from ...types      import SpeakMessageContent
-from ..base        import AgentBase
-from ..types       import ProcessChatMessageResult
-from .types        import DefaultState
+from ...shared  import default_role_description, default_summary_message
+from ..base     import AgentBase
+
+if TYPE_CHECKING:
+    from ....auth.user import User
+    from ...types      import AssistantChatMessage, UserChatMessage, SpeakMessageContent
+    from ..types       import ProcessChatMessageResult
+    from .types        import DefaultState
 
 class DefaultAgent(AgentBase[DefaultState]):
     """

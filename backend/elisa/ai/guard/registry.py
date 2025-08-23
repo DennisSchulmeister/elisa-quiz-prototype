@@ -17,7 +17,7 @@ class GuardRailRegistry:
     """
     Dynamic class registry for the title generation strategy.
     """
-    GuardRails: "list[type[GuardRailBase]]" = []
+    GuardRails: list[type[GuardRailBase]] = []
 
     @classmethod
     def read_config(cls):

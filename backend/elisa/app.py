@@ -9,8 +9,7 @@
 from __future__ import annotations
 
 from contextlib                    import asynccontextmanager
-from fastapi                       import FastAPI
-from fastapi                       import WebSocket
+from fastapi                       import FastAPI, WebSocket
 
 from .ai.assistant                 import AIAssistant
 from .ai.guard.registry            import GuardRailRegistry

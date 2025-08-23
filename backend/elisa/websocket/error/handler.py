@@ -10,11 +10,9 @@ from __future__           import annotations
 
 from ...auth.user         import User
 from ...database.error.db import ErrorDatabase
-from ..decorators         import handle_message
-from ..decorators         import websocket_handler
+from ..decorators         import handle_message, websocket_handler
 from ..parent             import ParentWebsocketHandler
-from .types               import BugReportMessage
-from .types               import ClientErrorMessage
+from .types               import BugReportMessage, ClientErrorMessage
 
 @websocket_handler
 class ErrorHandler:

@@ -7,10 +7,12 @@
 # License, or (at your option) any later version.
 
 from __future__ import annotations
-from typing     import override
+from typing     import override, TYPE_CHECKING
 
 from ..base     import SummarizerBase
-from ..types    import MessageSummary
+
+if TYPE_CHECKING:
+    from ..types import MessageSummary
 
 class DefaultSummarizer(SummarizerBase):
     """

@@ -7,10 +7,8 @@
 # License, or (at your option) any later version.
 
 from __future__ import annotations
-from pydantic   import BaseModel
-from pydantic   import Field
-from typing     import Any
-from typing     import Literal
+from pydantic   import BaseModel, Field
+from typing     import Any, Literal
 from uuid       import uuid4
 
 AgentCode = str

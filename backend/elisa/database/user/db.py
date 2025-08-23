@@ -11,18 +11,12 @@ from bson                            import ObjectId
 from pydantic                        import ValidationError
 from pymongo.asynchronous.collection import AsyncCollection
 
-from ...ai.agent.types               import ActivityUpdate
-from ...ai.agent.types               import AgentUpdate
+from ...ai.agent.types               import ActivityUpdate, AgentUpdate
 from ...ai.guard.types               import GuardRailResult
-from ...ai.types                     import MemoryUpdate
-from ...ai.types                     import UserChatMessage
+from ...ai.types                     import MemoryUpdate, UserChatMessage
 from ...database.utils               import now
 from ..utils                         import mongo_client
-from .types                          import Chat
-from .types                          import ChatKey
-from .types                          import ChatShort
-from .types                          import FlaggedMessage
-from .types                          import FlaggedMessageFilter
+from .types                          import Chat, ChatKey, ChatShort, FlaggedMessage, FlaggedMessageFilter
 
 class UserDatabase:
     """
@@ -171,11 +165,14 @@ class UserDatabase:
         return result
     
     @classmethod
-    async def insert_flagged_message(cls, msg: UserChatMessage, guard_rail: GuardRailResult):
+    async def insert_flagged_message(cls, chat: ChatKey, msg: UserChatMessage, guard_rail: GuardRailResult):
         """
         Insert a new user message flagged for manual review.
         """
         await cls.flagged_messages.insert_one({
+            "username":   chat.username,
+            "thread_id":  chat.thread_id,
+            "timestamp":  now(),
             "status":     "needs_review",
             "message":    msg.model_dump(),
             "guard_rail": guard_rail.model_dump(),

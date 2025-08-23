@@ -8,8 +8,7 @@
 
 from __future__   import annotations
 
-from ..decorators import handle_message
-from ..decorators import websocket_handler
+from ..decorators import handle_message, websocket_handler
 from ..parent     import ParentWebsocketHandler
 
 @websocket_handler

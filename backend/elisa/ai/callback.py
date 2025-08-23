@@ -11,10 +11,8 @@ from __future__ import annotations
 from abc          import ABC
 from abc          import abstractmethod
 
-from .agent.types import ActivityUpdate
-from .agent.types import AgentUpdate
-from .types       import AssistantChatMessage
-from .types       import MemoryUpdate
+from .agent.types import ActivityUpdate, AgentUpdate
+from .types       import AssistantChatMessage, MemoryUpdate
 
 class ChatAgentCallback(ABC):
     """

@@ -7,8 +7,7 @@
 # License, or (at your option) any later version.
 
 from __future__ import annotations
-from typing     import override
-from typing     import TYPE_CHECKING
+from typing     import override, TYPE_CHECKING
 
 from ...shared  import default_summary_message
 from ..base     import AgentRouterBase
@@ -24,7 +23,7 @@ class DefaultAgentRouter(AgentRouterBase):
     """
 
     @override
-    async def choose_agent(self, msg: "UserChatMessage") -> "ChooseAgentResult":
+    async def choose_agent(self, msg: UserChatMessage) -> ChooseAgentResult:
         """
         Inspect message summary, which already contains the current user message, and
         decide which agent should handle it.

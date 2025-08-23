@@ -14,14 +14,9 @@ from bson              import ObjectId
 from pydantic          import BaseModel
 from typing            import Literal
 
-from ...ai.agent.types import ActivityStates
-from ...ai.agent.types import AgentStates
+from ...ai.agent.types import ActivityStates, AgentStates
 from ...ai.guard.types import GuardRailResult
-from ...ai.types       import ChatKey
-from ...ai.types       import ConversationMemory
-from ...ai.types       import MessageHistory
-from ...ai.types       import PersistenceStrategy
-from ...ai.types       import UserChatMessage
+from ...ai.types       import ChatKey, ConversationMemory, MessageHistory, PersistenceStrategy, UserChatMessage
 
 class Chat(ChatKey):
     """
@@ -61,6 +56,7 @@ class FlaggedMessage(ChatKey):
     Rejected user message flagged for manual review.
     """
     _id:        ObjectId | None = None
+    timestamp:  datetime.datetime
     status:     Literal["needs_review", "false_positive", "reviewed"] = "needs_review"
     message:    UserChatMessage
     guard_rail: GuardRailResult
