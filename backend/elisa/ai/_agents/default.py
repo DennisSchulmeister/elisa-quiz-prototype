@@ -11,28 +11,21 @@ from pydantic   import BaseModel
 from typing     import TYPE_CHECKING
 
 from ..shared   import default_role_description, default_summary_message
-from .._agent   import AgentBase
+from .._agent   import AgentBase, Stateless
 
 if TYPE_CHECKING:
     from ...auth.user import User
     from .._agent     import ProcessChatMessageResult
     from ..models     import AssistantChatMessage, UserChatMessage, SpeakMessageContent
 
-class DefaultState(BaseModel):
-    """
-    Internal state of the default agent. Simply tracks whether the initial
-    greetings have been exchanged or we still need to say hello to the user.
-    """
-    welcome_done: bool = False
-
-class DefaultAgent(AgentBase[DefaultState]):
+class DefaultAgent(AgentBase[Stateless]):
     """
     Default agent that responds to all chat messages not targeted at a more specialized agent.
     """
     code = "default-agent"
 
     def __init__(self, **kwargs):
-        super().__init__(state=DefaultState(), **kwargs)
+        super().__init__(**kwargs)
     
     async def process_chat_message(self, msg: UserChatMessage, user: User) -> ProcessChatMessageResult:
         """

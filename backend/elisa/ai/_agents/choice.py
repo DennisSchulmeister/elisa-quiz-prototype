@@ -8,12 +8,7 @@
 
 from __future__ import annotations
 from pydantic   import BaseModel
-from typing     import TYPE_CHECKING
-
-from .._agent   import AgentBase
-
-if TYPE_CHECKING:
-    from .._agent import Stateless
+from .._agent   import AgentBase, Stateless
 
 class Choice(BaseModel):
     """
