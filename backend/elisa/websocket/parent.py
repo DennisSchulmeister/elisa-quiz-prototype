@@ -6,21 +6,38 @@
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 
-from __future__ import annotations
-
+from __future__          import annotations
 from asyncio.exceptions  import CancelledError
 from fastapi             import WebSocketDisconnect
+from pydantic            import BaseModel
 from traceback           import print_exc
 from typing              import TYPE_CHECKING
 
 from ..auth.exceptions   import AuthenticationRequired, PermissionDenied
 from ..auth.user         import User
-from ..database.error.db import ErrorDatabase
-from .types              import WebsocketMessage
+from ..database.error    import ErrorDatabase
 
 if TYPE_CHECKING:
     from fastapi import WebSocket
     from typing  import Any
+
+class WebsocketMessage(BaseModel):
+    """
+    Base type for all messages exchanged via the websocket. The only convention is
+    that it contains a string code with the message type. Depending on the code other
+    keys will be present.
+    """
+    code: str
+    """Message code for routing the message to the right handler"""
+
+    jwt: str = ""
+    """OpenID Connect access token (JWT)"""
+
+    body: dict = {}
+    """Message body (type depends on the message code)"""
+
+    class Config:
+        extra = "allow"
 
 class ParentWebsocketHandler:
     """

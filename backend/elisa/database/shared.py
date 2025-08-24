@@ -1,0 +1,24 @@
+# Elisa: AI Learning Assistant
+# © 2025 Dennis Schulmeister-Zimolong <dennis@wpvs.de>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+
+from __future__ import annotations
+from datetime   import datetime, timezone
+from os         import environ
+from pymongo    import AsyncMongoClient
+
+mongodb_url = environ.get("ELISA_MONGODB_URL", "mongodb://localhost:27017")
+"""Connection string for the mongo database (read-only)"""
+
+mongo_client = AsyncMongoClient(mongodb_url, tz_aware=True)
+"""Asynchronous mongo client"""
+
+def now() -> datetime:
+    """
+    Get the current date and time in UTC, as required by Mongo.
+    """
+    return datetime.now(tz=timezone.utc)

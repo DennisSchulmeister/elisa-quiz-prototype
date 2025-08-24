@@ -10,24 +10,19 @@ from __future__ import annotations
 
 import instructor, json, os, uuid
 
-from typing             import AsyncGenerator, cast, TYPE_CHECKING
+from typing          import AsyncGenerator, TYPE_CHECKING
 
-from ..database.user.db import UserDatabase
-from .agent.registry    import AgentRegistry
-from .callback          import ChatAgentCallback
-from .guard.registry    import GuardRailRegistry
-from .router.registry   import AgentRouterRegistry
-from .summary.registry  import SummarizerRegistry
-from .title.registry    import TitleGeneratorRegistry
+from ..database.user import UserDatabase
+from .callback       import ChatAgentCallback
+from .registry       import AIRegistry
 
 if TYPE_CHECKING:
-    from ..auth.user          import User
-    from .agent.base          import AgentBase
-    from .agent.default.agent import DefaultAgent
-    from .agent.types         import ActivityId, ActivityState, ActivityUpdate, AgentCode, AgentUpdate
-    from .types               import AssistantChatMessage, ChatKey, ChatMessage, ConversationMemory, MemoryUpdate
-    from .types               import PersistedState, PersistenceStrategy, SpeakMessageContent, SystemMessageContent
-    from .types               import UserChatMessage
+    from ..auth.user import User
+    from ._agent     import AgentBase
+    from .models     import ActivityId, ActivityState, ActivityUpdate, AgentCode, AgentUpdate
+    from .models     import AssistantChatMessage, ChatKey, ChatMessage, ConversationMemory, MemoryUpdate
+    from .models     import PersistedState, PersistenceStrategy, SpeakMessageContent, SystemMessageContent
+    from .models     import UserChatMessage
 
 class AIAssistant:
     """
@@ -96,14 +91,14 @@ class AIAssistant:
         self.user                  = user
         self.state                 = state
 
-        self.agents: dict[AgentCode, AgentBase] = {agent.code: agent(assistant=self) for agent in AgentRegistry.get_all_agent_classes()}
+        self.agents: dict[AgentCode, AgentBase] = {Agent.code: Agent(assistant=self) for Agent in AIRegistry.Agents}
 
         for code, agent in self.agents.items():
             # Note that self._state.agents is only ever used here 
             if code in self.state.agents:
                 agent._state = agent._state.model_validate(self.state.agents[code])
 
-        self.current_agent = self.agents["default"]
+        self.current_agent = self.agents[AIRegistry.default_agent_code]
         self.current_activity: ActivityState | None = None
 
         # Internal properties
@@ -111,10 +106,10 @@ class AIAssistant:
         self._callback        = callback
         self._thread_id       = thread_id
         self._persistence     = persistence
-        self._agent_router    = AgentRouterRegistry.AgentRouter(assistant=self)
-        self._summarizer      = SummarizerRegistry.Summarizer(assistant=self)
-        self._title_generator = TitleGeneratorRegistry.TitleGenerator(assistant=self)
-        self._guard_rails     = [GuardRail(assistant=self) for GuardRail in GuardRailRegistry.GuardRails]
+        self._agent_router    = AIRegistry.AgentRouter(assistant=self)
+        self._summarizer      = AIRegistry.Summarizer(assistant=self)
+        self._title_generator = AIRegistry.TitleGenerator(assistant=self)
+        self._guard_rails     = [GuardRail(assistant=self) for GuardRail in AIRegistry.GuardRails]
 
     @classmethod
     async def create(
@@ -136,6 +131,9 @@ class AIAssistant:
             thread_id:   Thread ID to restore a previous chat
             state:       Restored chat state, when saved on the client
         """
+        # Recover chat state and create instance
+        greet_user = False
+
         if not state:
             chat = None
 
@@ -151,6 +149,8 @@ class AIAssistant:
                     activities = chat.activities,
                 )
             else:
+                greet_user = True
+
                 state = PersistedState(
                     title      = "",
                     memory     = ConversationMemory(),
@@ -165,8 +165,22 @@ class AIAssistant:
             persistence = persistence,
             state       = state,
         )
-        default_agent: DefaultAgent = cast(DefaultAgent, instance.agents["default"])
-        await default_agent.greet_user()
+
+        # Send welcome message
+        if greet_user:
+            await instance.process_user_chat_message(
+                msg  = UserChatMessage(
+                    transient = True,
+                    content   = SpeakMessageContent(
+                        speak = """
+                            Task: Give me a warm welcome and introduce yourself.
+                            Then ask for my name and what topic I want to learn.
+                        """
+                    )
+                ),
+                user = user,
+            )
+
         return instance
     
     @property
@@ -217,7 +231,8 @@ class AIAssistant:
                     await UserDatabase.insert_flagged_message(self._chat_key, msg, check_result)
 
                 return await self.send_assistant_chat_message(
-                    propagate         = False,
+                    propagate         = True,
+                    user_message      = msg,
                     assistant_message = AssistantChatMessage(
                         content = SystemMessageContent(
                             severity = severity,
@@ -245,7 +260,7 @@ class AIAssistant:
                     ))
                 
             if not next_agent_code or not next_agent_code in self.agents:
-                next_agent_code = AgentRegistry.default_agent_code
+                next_agent_code = AIRegistry.default_agent_code
 
             # Pause current activity when another agent was chosen
             if self.current_activity and not self.current_activity.agent == next_agent_code:
@@ -297,11 +312,12 @@ class AIAssistant:
         except KeyError:
             return
     
-        await self.propagate_activity_update(ActivityUpdate(
-            id    = self.current_activity.id,
-            path  = "status",
-            value = "running"
-        ))
+        if self.current_activity:
+            await self.propagate_activity_update(ActivityUpdate(
+                id    = self.current_activity.id,
+                path  = "status",
+                value = "running"
+            ))
 
     async def propagate_activity_update(self, update: ActivityUpdate):
         """
@@ -356,7 +372,8 @@ class AIAssistant:
         _messages: list[ChatMessage] = [message for message in messages if message]
 
         for message in _messages:
-            self.state.memory.messages.append(message)
+            if not message.transient:
+                self.state.memory.messages.append(message)
         
         await self._summarizer.compress_memory()
         

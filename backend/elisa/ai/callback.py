@@ -11,8 +11,8 @@ from abc        import ABC, abstractmethod
 from typing     import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .agent.types import ActivityUpdate, AgentUpdate
-    from .types       import AssistantChatMessage, MemoryUpdate
+    from ._agent import ActivityUpdate, AgentUpdate
+    from .models import AssistantChatMessage, MemoryUpdate
 
 class ChatAgentCallback(ABC):
     """
